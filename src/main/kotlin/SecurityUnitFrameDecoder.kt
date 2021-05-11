@@ -7,6 +7,7 @@ import kotlin.properties.Delegates
  */
 class SecurityUnitFrameDecoder {
 
+    @Suppress("FunctionName")
     companion object {
         /**
          * 解析安全单元帧
@@ -19,7 +20,7 @@ class SecurityUnitFrameDecoder {
             resultList: MutableList<HashMap<ResultColumn, String>>
         ): SecurityUnitFrameDecodeResultCode {
             val decodeState: SecurityUnitFrameDecodeResultCode
-            //字符串预处理----去除空格、换行、转换为大写
+            //字符串预处理----对数据域之外的部分去除空格、换行、转换为大写
             val pretreatmentFrame = frame.replace(Regex("[\\s\\n\\r]"), "").toUpperCase()
             //安全单元帧字节完整性检测
             if (!frameByteIntegrityCheck(pretreatmentFrame)) return SecurityUnitFrameDecodeResultCode.FRAME_BYTE_INCOMPLETE
@@ -53,7 +54,7 @@ class SecurityUnitFrameDecoder {
         private fun frameFormatCheck(frame: String): Boolean {
             var decodeSuccess: Boolean
 
-            // 字符串字符合法
+            // 字符串字符合法性判断
             val charList = listOf('1', '2', '3', "4", "5", "6", "7", "8", "9", "0", "A", "B", "C", "D", "E", "F")
             decodeSuccess = frame.filterNot { !charList.contains(it) }.isNotEmpty()
             if (!decodeSuccess) return decodeSuccess
@@ -254,148 +255,177 @@ class SecurityUnitFrameDecoder {
                 return
             }
             when (F_C_or_A) {
+                //todo 待完成数据域解析
                 // 安全单元自身操作命令
-                0x0001 -> parse_0001_DataDomain()
-                0x0002 -> parse_0002_DataDomain()
-//                0x0003->parse_0003_DataDomain()
-//                0x0004->parse_0004_DataDomain()
-//                0x0005->parse_0005_DataDomain()
-//                0x0006->parse_0006_DataDomain()
-//                0x0007->parse_0007_DataDomain()
-//                0x0008->parse_0008_DataDomain()
-//                0x0009->parse_0009_DataDomain()
-//                0x000A->parse_000A_DataDomain()
-//                0x0081->parse_0081_DataDomain()
-//                0x0082->parse_0082_DataDomain()
-//                0x0083->parse_0083_DataDomain()
-//                0x0084->parse_0084_DataDomain()
-//                0x0085->parse_0085_DataDomain()
-//                0x0086->parse_0086_DataDomain()
-//                0x0087->parse_0087_DataDomain()
-//                0x0088->parse_0088_DataDomain()
-//                0x0089->parse_0089_DataDomain()
-//                0x008A->parse_008A_DataDomain()
+//                0x0001 -> parse_0001_DataDomain(frame,resultList) // 无数据域
+                0x0002 -> parse_0002_DataDomain(frame, resultList)
+//                0x0003->parse_0003_DataDomain(frame,resultList)
+//                0x0004->parse_0004_DataDomain(frame,resultList)
+//                0x0005->parse_0005_DataDomain(frame,resultList)
+//                0x0006->parse_0006_DataDomain(frame,resultList)
+//                0x0007->parse_0007_DataDomain(frame,resultList)
+//                0x0008->parse_0008_DataDomain(frame,resultList)
+//                0x0009->parse_0009_DataDomain(frame,resultList)
+//                0x000A->parse_000A_DataDomain(frame,resultList)
+//                0x0081->parse_0081_DataDomain(frame,resultList)
+//                0x0082->parse_0082_DataDomain(frame,resultList)
+//                0x0083->parse_0083_DataDomain(frame,resultList)
+//                0x0084->parse_0084_DataDomain(frame,resultList)
+//                0x0085->parse_0085_DataDomain(frame,resultList)
+//                0x0086->parse_0086_DataDomain(frame,resultList)
+//                0x0087->parse_0087_DataDomain(frame,resultList)
+//                0x0088->parse_0088_DataDomain(frame,resultList)
+//                0x0089->parse_0089_DataDomain(frame,resultList)
+//                0x008A->parse_008A_DataDomain(frame,resultList)
 //                // 现场服务终端与管理系统交互类命令
-//                0x0101->parse_0101_DataDomain()
-//                0x0102->parse_0102_DataDomain()
-//                0x0103->parse_0103_DataDomain()
-//                0x0104->parse_0104_DataDomain()
-//                0x0105->parse_0105_DataDomain()
-//                0x0106->parse_0106_DataDomain()
-//                0x0107->parse_0107_DataDomain()
-//                0x0108->parse_0108_DataDomain()
-//                0x0109->parse_0109_DataDomain()
-//                0x010A->parse_010A_DataDomain()
-//                0x0181->parse_0181_DataDomain()
-//                0x0182->parse_0182_DataDomain()
-//                0x0183->parse_0183_DataDomain()
-//                0x0184->parse_0184_DataDomain()
-//                0x0185->parse_0185_DataDomain()
-//                0x0186->parse_0186_DataDomain()
-//                0x0187->parse_0187_DataDomain()
-//                0x0188->parse_0188_DataDomain()
-//                0x0189->parse_0189_DataDomain()
-//                0x018A->parse_018A_DataDomain()
+//                0x0101->parse_0101_DataDomain(frame,resultList)
+//                0x0102->parse_0102_DataDomain(frame,resultList)
+//                0x0103->parse_0103_DataDomain(frame,resultList)
+//                0x0104->parse_0104_DataDomain(frame,resultList)
+//                0x0105->parse_0105_DataDomain(frame,resultList)
+//                0x0106->parse_0106_DataDomain(frame,resultList)
+//                0x0107->parse_0107_DataDomain(frame,resultList)
+//                0x0108->parse_0108_DataDomain(frame,resultList)
+//                0x0109->parse_0109_DataDomain(frame,resultList)
+//                0x010A->parse_010A_DataDomain(frame,resultList)
+//                0x0181->parse_0181_DataDomain(frame,resultList)
+//                0x0182->parse_0182_DataDomain(frame,resultList)
+//                0x0183->parse_0183_DataDomain(frame,resultList)
+//                0x0184->parse_0184_DataDomain(frame,resultList)
+//                0x0185->parse_0185_DataDomain(frame,resultList)
+//                0x0186->parse_0186_DataDomain(frame,resultList)
+//                0x0187->parse_0187_DataDomain(frame,resultList)
+//                0x0188->parse_0188_DataDomain(frame,resultList)
+//                0x0189->parse_0189_DataDomain(frame,resultList)
+//                0x018A->parse_018A_DataDomain(frame,resultList)
 //                // 现场服务终端与电能表的交互命令
-//                0x0201->parse_0201_DataDomain()
-//                0x0202->parse_0202_DataDomain()
-//                0x0203->parse_0203_DataDomain()
-//                0x0204->parse_0204_DataDomain()
-//                0x0205->parse_0205_DataDomain()
-//                0x0206->parse_0206_DataDomain()
-//                0x0207->parse_0207_DataDomain()
-//                0x0208->parse_0208_DataDomain()
-//                0x0209->parse_0209_DataDomain()
-//                0x020A->parse_020A_DataDomain()
-//                0x020B->parse_020B_DataDomain()
-//                0x020C->parse_020C_DataDomain()
-//                0x020D->parse_020D_DataDomain()
-//                0x020E->parse_020E_DataDomain()
-//                0x0281->parse_0281_DataDomain()
-//                0x0282->parse_0282_DataDomain()
-//                0x0283->parse_0283_DataDomain()
-//                0x0284->parse_0284_DataDomain()
-//                0x0285->parse_0285_DataDomain()
-//                0x0286->parse_0286_DataDomain()
-//                0x0287->parse_0287_DataDomain()
-//                0x0288->parse_0288_DataDomain()
-//                0x0289->parse_0289_DataDomain()
-//                0x028A->parse_028A_DataDomain()
-//                0x028B->parse_028B_DataDomain()
-//                0x028C->parse_028C_DataDomain()
-//                0x028D->parse_028D_DataDomain()
-//                0x028E->parse_028E_DataDomain()
+//                0x0201->parse_0201_DataDomain(frame,resultList)
+//                0x0202->parse_0202_DataDomain(frame,resultList)
+//                0x0203->parse_0203_DataDomain(frame,resultList)
+//                0x0204->parse_0204_DataDomain(frame,resultList)
+//                0x0205->parse_0205_DataDomain(frame,resultList)
+//                0x0206->parse_0206_DataDomain(frame,resultList)
+//                0x0207->parse_0207_DataDomain(frame,resultList)
+//                0x0208->parse_0208_DataDomain(frame,resultList)
+//                0x0209->parse_0209_DataDomain(frame,resultList)
+//                0x020A->parse_020A_DataDomain(frame,resultList)
+//                0x020B->parse_020B_DataDomain(frame,resultList)
+//                0x020C->parse_020C_DataDomain(frame,resultList)
+//                0x020D->parse_020D_DataDomain(frame,resultList)
+//                0x020E->parse_020E_DataDomain(frame,resultList)
+//                0x0281->parse_0281_DataDomain(frame,resultList)
+//                0x0282->parse_0282_DataDomain(frame,resultList)
+//                0x0283->parse_0283_DataDomain(frame,resultList)
+//                0x0284->parse_0284_DataDomain(frame,resultList)
+//                0x0285->parse_0285_DataDomain(frame,resultList)
+//                0x0286->parse_0286_DataDomain(frame,resultList)
+//                0x0287->parse_0287_DataDomain(frame,resultList)
+//                0x0288->parse_0288_DataDomain(frame,resultList)
+//                0x0289->parse_0289_DataDomain(frame,resultList)
+//                0x028A->parse_028A_DataDomain(frame,resultList)
+//                0x028B->parse_028B_DataDomain(frame,resultList)
+//                0x028C->parse_028C_DataDomain(frame,resultList)
+//                0x028D->parse_028D_DataDomain(frame,resultList)
+//                0x028E->parse_028E_DataDomain(frame,resultList)
 //                // 现场服务终端与安全隔离网关交互类命令
-//                0x0301->parse_0301_DataDomain()
-//                0x0302->parse_0302_DataDomain()
-//                0x0303->parse_0303_DataDomain()
-//                0x0304->parse_0304_DataDomain()
-//                0x0305->parse_0305_DataDomain()
-//                0x0381->parse_0381_DataDomain()
-//                0x0382->parse_0382_DataDomain()
-//                0x0383->parse_0383_DataDomain()
-//                0x0384->parse_0384_DataDomain()
-//                0x0385->parse_0385_DataDomain()
+//                0x0301->parse_0301_DataDomain(frame,resultList)
+//                0x0302->parse_0302_DataDomain(frame,resultList)
+//                0x0303->parse_0303_DataDomain(frame,resultList)
+//                0x0304->parse_0304_DataDomain(frame,resultList)
+//                0x0305->parse_0305_DataDomain(frame,resultList)
+//                0x0381->parse_0381_DataDomain(frame,resultList)
+//                0x0382->parse_0382_DataDomain(frame,resultList)
+//                0x0383->parse_0383_DataDomain(frame,resultList)
+//                0x0384->parse_0384_DataDomain(frame,resultList)
+//                0x0385->parse_0385_DataDomain(frame,resultList)
 //                // 现场服务终端与电子封印的交互命令
-//                0x0401->parse_0401_DataDomain()
-//                0x0402->parse_0402_DataDomain()
-//                0x0403->parse_0403_DataDomain()
-//                0x0404->parse_0404_DataDomain()
-//                0x0405->parse_0405_DataDomain()
-//                0x0406->parse_0406_DataDomain()
-//                0x0407->parse_0407_DataDomain()
-//                0x0408->parse_0408_DataDomain()
-//                0x0409->parse_0409_DataDomain()
-//                0x040A->parse_040A_DataDomain()
-//                0x0481->parse_0481_DataDomain()
-//                0x0482->parse_0482_DataDomain()
-//                0x0483->parse_0483_DataDomain()
-//                0x0484->parse_0484_DataDomain()
-//                0x0485->parse_0485_DataDomain()
-//                0x0486->parse_0486_DataDomain()
-//                0x0487->parse_0487_DataDomain()
-//                0x0488->parse_0488_DataDomain()
-//                0x0489->parse_0489_DataDomain()
-//                0x048A->parse_048A_DataDomain()
+//                0x0401->parse_0401_DataDomain(frame,resultList)
+//                0x0402->parse_0402_DataDomain(frame,resultList)
+//                0x0403->parse_0403_DataDomain(frame,resultList)
+//                0x0404->parse_0404_DataDomain(frame,resultList)
+//                0x0405->parse_0405_DataDomain(frame,resultList)
+//                0x0406->parse_0406_DataDomain(frame,resultList)
+//                0x0407->parse_0407_DataDomain(frame,resultList)
+//                0x0408->parse_0408_DataDomain(frame,resultList)
+//                0x0409->parse_0409_DataDomain(frame,resultList)
+//                0x040A->parse_040A_DataDomain(frame,resultList)
+//                0x0481->parse_0481_DataDomain(frame,resultList)
+//                0x0482->parse_0482_DataDomain(frame,resultList)
+//                0x0483->parse_0483_DataDomain(frame,resultList)
+//                0x0484->parse_0484_DataDomain(frame,resultList)
+//                0x0485->parse_0485_DataDomain(frame,resultList)
+//                0x0486->parse_0486_DataDomain(frame,resultList)
+//                0x0487->parse_0487_DataDomain(frame,resultList)
+//                0x0488->parse_0488_DataDomain(frame,resultList)
+//                0x0489->parse_0489_DataDomain(frame,resultList)
+//                0x048A->parse_048A_DataDomain(frame,resultList)
 //                // 现场服务终端与电子标签的交互命令
-//                0x0501->parse_0501_DataDomain()
-//                0x0502->parse_0502_DataDomain()
-//                0x0503->parse_0503_DataDomain()
-//                0x0504->parse_0504_DataDomain()
-//                0x0581->parse_0581_DataDomain()
-//                0x0582->parse_0582_DataDomain()
-//                0x0583->parse_0583_DataDomain()
-//                0x0584->parse_0584_DataDomain()
+//                0x0501->parse_0501_DataDomain(frame,resultList)
+//                0x0502->parse_0502_DataDomain(frame,resultList)
+//                0x0503->parse_0503_DataDomain(frame,resultList)
+//                0x0504->parse_0504_DataDomain(frame,resultList)
+//                0x0581->parse_0581_DataDomain(frame,resultList)
+//                0x0582->parse_0582_DataDomain(frame,resultList)
+//                0x0583->parse_0583_DataDomain(frame,resultList)
+//                0x0584->parse_0584_DataDomain(frame,resultList)
 //                // 现场服务终端与外设交互命令
-//                0x0601->parse_0601_DataDomain()
-//                0x0602->parse_0602_DataDomain()
-//                0x0603->parse_0603_DataDomain()
-//                0x0604->parse_0604_DataDomain()
-//                0x0605->parse_0605_DataDomain()
-//                0x0606->parse_0606_DataDomain()
-//                0x0681->parse_0681_DataDomain()
-//                0x0682->parse_0682_DataDomain()
-//                0x0683->parse_0683_DataDomain()
-//                0x0684->parse_0684_DataDomain()
-//                0x0685->parse_0685_DataDomain()
-//                0x0686->parse_0686_DataDomain()
+//                0x0601->parse_0601_DataDomain(frame,resultList)
+//                0x0602->parse_0602_DataDomain(frame,resultList)
+//                0x0603->parse_0603_DataDomain(frame,resultList)
+//                0x0604->parse_0604_DataDomain(frame,resultList)
+//                0x0605->parse_0605_DataDomain(frame,resultList)
+//                0x0606->parse_0606_DataDomain(frame,resultList)
+//                0x0681->parse_0681_DataDomain(frame,resultList)
+//                0x0682->parse_0682_DataDomain(frame,resultList)
+//                0x0683->parse_0683_DataDomain(frame,resultList)
+//                0x0684->parse_0684_DataDomain(frame,resultList)
+//                0x0685->parse_0685_DataDomain(frame,resultList)
+//                0x0686->parse_0686_DataDomain(frame,resultList)
 //                // 安全单元升级命令
-//                0xFE01->parse_FE01_DataDomain()
-//                0xFE02->parse_FE02_DataDomain()
-//                0xFE03->parse_FE03_DataDomain()
-//                0xFE04->parse_FE04_DataDomain()
-//                0xFE81->parse_FE81_DataDomain()
-//                0xFE82->parse_FE82_DataDomain()
-//                0xFE84->parse_FE84_DataDomain()
+//                0xFE01->parse_FE01_DataDomain(frame,resultList)
+//                0xFE02->parse_FE02_DataDomain(frame,resultList)
+//                0xFE03->parse_FE03_DataDomain(frame,resultList)
+//                0xFE04->parse_FE04_DataDomain(frame,resultList)
+//                0xFE81->parse_FE81_DataDomain(frame,resultList)
+//                0xFE82->parse_FE82_DataDomain(frame,resultList)
+//                0xFE84->parse_FE84_DataDomain(frame,resultList)
             }
         }
 
-        private fun parse_0002_DataDomain() {
-            TODO("Not yet implemented")
-        }
+        private fun parse_0002_DataDomain(frame: String, resultList: MutableList<HashMap<ResultColumn, String>>) {
+            /*
+            --------------------------------
+            |       8421 BCD 编码方式       |
+            --------------------------------
+            |   十进制数    |   8421 码     |
+            --------------------------------
+            |       0      |    0000       |
+            |       1      |    0001       |
+            |       2      |    0010       |
+            |       3      |    0011       |
+            |       4      |    0100       |
+            |       5      |    0101       |
+            |       6      |    0110       |
+            |       7      |    0111       |
+            |       8      |    1000       |
+            |       9      |    1001       |
+            --------------------------------
 
-        private fun parse_0001_DataDomain() {
-            TODO("Not yet implemented")
+            --------------------------------
+            |             ASCII            |
+            --------------------------------
+            |   A - Z    |    0x41 - 0x5A  |
+            |   a - z    |    0x61 - 0x7A  |
+            --------------------------------
+
+            注：
+            1、因 2.0 安全单元通信协议中未对 BCD 的具体编码方式作说明，这里默认使用 8421 编码方式
+            2、协议中写了操作员密码可以包含 A-Z、a-z 以及空格字符，但是实际这些字符的 ASCII 编码方式
+                与 BCD 的编码方式有冲突（不止与 8421 的 BCD 编码方式冲突），至使无法区分出密码字节中
+                哪些字节是 ASCII 编码，哪些字节是 BCD 编码，所以目前默认密码字节全是 BCD 编码，不支持
+                解析 ASCII 编码的字符。
+             */
+            //todo 写到这里了
         }
 
         /**
@@ -742,6 +772,7 @@ class SecurityUnitFrameDecoder {
          *
          * @param F 主功能标识
          */
+        @Suppress("FunctionName")
         private fun Int.get_C_or_A_Meaning(F: Int): String {
             val meaning = when (F) {
                 0x00 -> when (this and 0x7F) {
@@ -869,6 +900,7 @@ class SecurityUnitFrameDecoder {
         /**
          * 获取主功能标识含义
          */
+        @Suppress("FunctionName")
         private fun Int.get_F_Meaning(): String =
             "主功能标识：" + when (this) {
                 0x00 -> "安全单元自身操作命令"

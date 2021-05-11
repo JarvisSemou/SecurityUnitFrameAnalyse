@@ -47,7 +47,6 @@ fun main() = Window {
                 Button(
                     modifier = Modifier.width(100.dp),
                     onClick = {
-                        //todo 修改resultList 的引用
                         resultCode = SecurityUnitFrameDecoder.decode(securityUnitFrame, resultList)
                     }
                 ) {
@@ -57,6 +56,7 @@ fun main() = Window {
             Row(
                 modifier = Modifier.fillMaxSize()
             ) {
+                //todo 待优化结果展示
                 when (resultCode) {
                     is SecurityUnitFrameDecoder.SecurityUnitFrameDecodeResultCode.DONE -> {
                         Column(
