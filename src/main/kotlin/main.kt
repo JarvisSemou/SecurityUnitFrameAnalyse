@@ -5,6 +5,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.selection.SelectionContainer
 import androidx.compose.ui.unit.dp
@@ -12,12 +13,15 @@ import androidx.compose.ui.unit.dp
 
 fun main() = Window {
     MaterialTheme {
-        var SecurityUnitFrame by remember { mutableStateOf("") }
+        var securityUnitFrame by remember { mutableStateOf("") }
 
-        //todo 结果列表的数据结构有待完善，计划增加原始帧结构划分，帧数据解析，帧数据含义解释
-        var resultList = remember { mutableStateListOf<String>() }
+        val resultList = remember { mutableStateListOf<HashMap<ResultColumn, String>>() }
 
-        var resultCode = remember {}
+        var resultCode by remember {
+            mutableStateOf<SecurityUnitFrameDecoder.SecurityUnitFrameDecodeResultCode>(
+                SecurityUnitFrameDecoder.SecurityUnitFrameDecodeResultCode.DO_NOTHING
+            )
+        }
         //总体布局
         Column(
             modifier = Modifier.fillMaxSize()
@@ -25,12 +29,14 @@ fun main() = Window {
 
             SelectionContainer {
                 TextField(
-                    value = SecurityUnitFrame,
+                    value = securityUnitFrame,
                     modifier = Modifier.fillMaxWidth()
                         .fillMaxHeight(0.15f),
                     label = { Text("输入安全单元帧") },
                     onValueChange = {
-                        SecurityUnitFrame = it
+                        securityUnitFrame = it
+                        if (it.isEmpty()) resultCode =
+                            SecurityUnitFrameDecoder.SecurityUnitFrameDecodeResultCode.DO_NOTHING
                     })
             }
             Row(
@@ -41,7 +47,8 @@ fun main() = Window {
                 Button(
                     modifier = Modifier.width(100.dp),
                     onClick = {
-                        SecurityUnitFrameDecoder.decode(SecurityUnitFrame, resultList)
+                        //todo 修改resultList 的引用
+                        resultCode = SecurityUnitFrameDecoder.decode(securityUnitFrame, resultList)
                     }
                 ) {
                     Text("解   析")
@@ -50,26 +57,61 @@ fun main() = Window {
             Row(
                 modifier = Modifier.fillMaxSize()
             ) {
-                Column(
-                    modifier = Modifier.fillMaxHeight()
-                        .fillMaxWidth(0.3f)
-                ) {
-                    Text("原始结果")
-                }
-                Column(
-                    modifier = Modifier.fillMaxHeight()
-                        .fillMaxWidth(0.3f)
-                ) {
-                    Text("解析结果")
-                }
-                Column(
-                    modifier = Modifier.fillMaxHeight()
-                        .fillMaxWidth(0.4f)
-                ) {
-                    Text("含义解释")
+                when (resultCode) {
+                    is SecurityUnitFrameDecoder.SecurityUnitFrameDecodeResultCode.DONE -> {
+                        Column(
+                            modifier = Modifier.fillMaxHeight()
+                                .fillMaxWidth(0.3f)
+                        ) {
+                            for (resultMap in resultList) Text(resultMap[ResultColumn.OriginColumn]!!)
+                        }
+                        Column(
+                            modifier = Modifier.fillMaxHeight()
+                                .fillMaxWidth(0.3f)
+                        ) {
+                            for (resultMap in resultList) Text(resultMap[ResultColumn.AnalyzedColumn]!!)
+                        }
+                        Column(
+//                            modifier = Modifier.fillMaxHeight()
+//                                .fillMaxWidth(0.4f)
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            for (resultMap in resultList) Text(resultMap[ResultColumn.MeaningColumn]!!)
+                        }
+                    }
+                    else -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                resultCode.msg
+                            )
+                        }
+                    }
                 }
             }
         }
 
     }
+}
+
+/**
+ * 结果列
+ */
+sealed class ResultColumn {
+    /**
+     * 原始列
+     */
+    object OriginColumn : ResultColumn()
+
+    /**
+     * 解析后的列
+     */
+    object AnalyzedColumn : ResultColumn()
+
+    /**
+     * 解释列
+     */
+    object MeaningColumn : ResultColumn()
 }
