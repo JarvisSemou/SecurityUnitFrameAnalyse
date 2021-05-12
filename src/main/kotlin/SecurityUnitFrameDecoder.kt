@@ -444,7 +444,38 @@ class SecurityUnitFrameDecoder {
 
             map_1[ResultType.Origin] = data_1.toZeroPrefixHexString(data_1_byteLength)
             map_1[ResultType.Analyzed] = data_1.toZeroPrefixHexString(data_1_byteLength)
-            map_1[ResultType.Meaning] = ""
+            map_1[ResultType.Meaning] = "ESAM 类型：" + when (data_1) {
+                "01" -> "C-ESAM"
+                "02" -> "Y-ESAM"
+                else -> "未知类型"
+            }
+            map_1[ResultType.MeaningDetails] = """
+                |数据名称：ESAM 类型
+                |字节数：1
+                |数据格式：HEX
+                |意义：
+                |   01：C-ESAM
+                |   02：Y-ESAM
+            """.trimMargin()
+
+            map_2[ResultType.Origin] = """
+                ${data_2_1.toZeroPrefixHexString(data_2_1_byteLength)}
+                ${data_2_2.toZeroPrefixHexString(data_2_2_byteLength)}
+            """.trimIndent()
+            map_2[ResultType.Analyzed] = """
+                发行数据内容长度：${Integer.parseInt(data_2_1, 16)}
+                发行数据内容：${data_2_2.toZeroPrefixHexString(data_2_2_byteLength)}
+            """.trimIndent()
+            map_2[ResultType.Meaning] = "发行数据内容"
+            map_2[ResultType.MeaningDetails] = """
+                数据名称：发行数据内容
+                字节数：2 + N
+                数据格式：HEX
+                意义：发行数据内容
+            """.trimIndent()
+
+            resultList.add(map_1)
+            resultList.add(map_2)
         }
 
         private fun parse_0005_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
