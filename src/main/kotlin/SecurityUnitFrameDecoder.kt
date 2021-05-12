@@ -1,3 +1,5 @@
+@file:Suppress("LocalVariableName")
+
 import kotlin.properties.Delegates
 
 /**
@@ -140,11 +142,17 @@ class SecurityUnitFrameDecoder {
         private var LH by Delegates.notNull<Int>()
         private var LL by Delegates.notNull<Int>()
 
-        /** 从原始帧中解析出来的帧长度，包含 F、C 或 A、S、DATA */
-        private var frameLength by Delegates.notNull<Int>()
+        /** 从原始帧中解析出来的帧字节长度，包含 F、C 或 A、S、DATA */
+        private var frameByteLength by Delegates.notNull<Int>()
 
-        /** DATA（数据域）的长度 */
-        private var dataDomainLength by Delegates.notNull<Int>()
+        /** DATA（数据域）的字节长度 */
+        private var dataDomainByteLength by Delegates.notNull<Int>()
+
+        /** DATA（数据域）在 frame 字符串中的字符长度 */
+        private var dataDomainCharLength by Delegates.notNull<Int>()
+
+        /** DATA（数据域）在 frame 字符串中的起始字符索引编号 */
+        private var dataDomainCharStartIndex by Delegates.notNull<Int>()
         private var F by Delegates.notNull<Int>()
         private var C_or_A by Delegates.notNull<Int>()
         private var C by Delegates.notNull<Int>()
@@ -173,7 +181,7 @@ class SecurityUnitFrameDecoder {
             CS = frame.substring(frame.length - 4, frame.length - 2)
             LH = Integer.parseInt(frame.substring(2, 4), 16) shl 8
             LL = Integer.parseInt(frame.substring(4, 6), 16)
-            frameLength = LH xor LL
+            frameByteLength = LH xor LL
             F = Integer.parseInt(frame.substring(6, 8), 16)
             C_or_A = Integer.parseInt(frame.substring(8, 10), 16)
             C = C_or_A and 0x7F
@@ -182,12 +190,18 @@ class SecurityUnitFrameDecoder {
             isAcknoledgement = C_or_A and 0x80 == 0x80
             if (isAcknoledgement) {
                 S = Integer.parseInt(frame.substring(10, 12), 16)
-                dataDomainLength = frameLength - 6
+                dataDomainByteLength = frameByteLength - 6
+                dataDomainCharStartIndex = 12
             } else {
-                dataDomainLength = frameLength - 5
+                dataDomainByteLength = frameByteLength - 5
+                dataDomainCharStartIndex = 10
             }
             // 对 F=0xFE,C=0x03 的返回帧的数据域长度的特殊计算
-            if (isFE03Acknowledgement) dataDomainLength = frameLength - 4
+            if (isFE03Acknowledgement) {
+                dataDomainByteLength = frameByteLength - 4
+                dataDomainCharStartIndex = 8
+            }
+            dataDomainCharLength = dataDomainByteLength * 2
 
             // 填充 E9 LH LL F C A S
             val map_E9 = HashMap<ResultColumn, String>()
@@ -197,21 +211,27 @@ class SecurityUnitFrameDecoder {
             val map_S = HashMap<ResultColumn, String>()
             map_E9[ResultColumn.OriginColumn] = E9
             map_E9[ResultColumn.AnalyzedColumn] = E9
-            map_E9[ResultColumn.MeaningColumn] = "帧起始码：标识一桢信息的开始"
-            map_LHLL[ResultColumn.OriginColumn] = frameLength.toZeroPrefixHexString(2)
-            map_LHLL[ResultColumn.AnalyzedColumn] = frameLength.toString()
-            map_LHLL[ResultColumn.MeaningColumn] = "帧长度：标识从主功能标识开始到数据域最后1字节结束的字节数。2字节16进制数，高字节在前，低字节在后"
+            map_E9[ResultColumn.MeaningColumn] = "帧起始码"
+            map_E9[ResultColumn.MeaningDetails] = "标识一桢信息的开始"
+            map_LHLL[ResultColumn.OriginColumn] = frameByteLength.toZeroPrefixHexString(2)
+            map_LHLL[ResultColumn.AnalyzedColumn] = frameByteLength.toString()
+            map_LHLL[ResultColumn.MeaningColumn] = "帧长度"
+            map_LHLL[ResultColumn.MeaningDetails] = "标识从主功能标识开始到数据域最后1字节结束的字节数。2字节16进制数，高字节在前，低字节在后"
             map_F[ResultColumn.OriginColumn] = F.toZeroPrefixHexString()
             map_F[ResultColumn.AnalyzedColumn] = F.toString()
             map_F[ResultColumn.MeaningColumn] = F.get_F_Meaning()
+            map_F[ResultColumn.MeaningDetails] = "表示主命令类型"
             if (!isFE03Acknowledgement) {
                 map_C_or_A[ResultColumn.OriginColumn] = C_or_A.toZeroPrefixHexString()
                 map_C_or_A[ResultColumn.AnalyzedColumn] = C_or_A.toString()
                 map_C_or_A[ResultColumn.MeaningColumn] = C_or_A.get_C_or_A_Meaning(F)
+                map_C_or_A[ResultColumn.MeaningDetails] = "标识命令类型，最高位D7=0，D6-D0 命令码"
                 if (isAcknoledgement) {
                     map_S[ResultColumn.OriginColumn] = S.toZeroPrefixHexString()
                     map_S[ResultColumn.AnalyzedColumn] = S.toString()
-                    map_S[ResultColumn.MeaningColumn] = S.toString()
+                    map_S[ResultColumn.MeaningColumn] = S.get_S_Meaning(F, A)
+                    map_C_or_A[ResultColumn.MeaningDetails] = "标识响应类型，最高位 D7=1，D6-D0 响应码与命令码相同"
+                    map_S[ResultColumn.MeaningDetails] = "标识响应状态，仅适用于响应帧，00 表示正常响应，非 00 为异常响应"
                 }
             }
             resultList.add(map_E9)
@@ -222,17 +242,19 @@ class SecurityUnitFrameDecoder {
                 if (isAcknoledgement) resultList.add(map_S)
             }
             // 解析数据域
-            if (dataDomainLength != 0) parseFrameData(frame, resultList)
+            if (dataDomainByteLength != 0) parseFrameData(frame, resultList)
 
             // 填充 CS E6
             val map_CS = HashMap<ResultColumn, String>()
             val map_E6 = HashMap<ResultColumn, String>()
             map_CS[ResultColumn.OriginColumn] = CS.toZeroPrefixHexString()
             map_CS[ResultColumn.AnalyzedColumn] = Integer.parseInt(CS, 16).toString()
-            map_CS[ResultColumn.MeaningColumn] = "帧校验：帧起始码到数据域最后一个字节的算术和（模256）"
+            map_CS[ResultColumn.MeaningColumn] = "帧校验"
+            map_CS[ResultColumn.MeaningDetails] = "帧起始码到数据域最后一个字节的算术和（模256）"
             map_E6[ResultColumn.OriginColumn] = E6
             map_E6[ResultColumn.AnalyzedColumn] = E6
-            map_E6[ResultColumn.MeaningColumn] = "帧结束码：标识一桢信息的结束"
+            map_E6[ResultColumn.MeaningColumn] = "帧结束码"
+            map_E6[ResultColumn.MeaningDetails] = "标识一桢信息的结束"
             resultList.add(map_CS)
             resultList.add(map_E6)
 
@@ -425,7 +447,19 @@ class SecurityUnitFrameDecoder {
                 哪些字节是 ASCII 编码，哪些字节是 BCD 编码，所以目前默认密码字节全是 BCD 编码，不支持
                 解析 ASCII 编码的字符。
              */
-            //todo 写到这里了
+            //todo 写到这了
+            /*
+            |   数据名称    |   字节数     |   数据格式    |   意义          |
+            |-------------------------------------------------------------
+            |   操作员密码   |       3    |      BCD     |   0-9，A-Z，a-z ，空格表示密码串的结束符
+             */
+            val map_1 = HashMap<ResultColumn, String>()
+            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharStartIndex + dataDomainCharLength)
+            map_1[ResultColumn.OriginColumn] = data_1
+            map_1[ResultColumn.AnalyzedColumn] = data_1
+            // todo 详细怎么加含义
+            map_1[ResultColumn.MeaningColumn] = "数据名称：操作员密码；字节数：3"
+            resultList.add(map_1)
         }
 
         /**
@@ -764,11 +798,11 @@ class SecurityUnitFrameDecoder {
                 }
                 else -> "未知主功能标识"
             }
-            return "状态码：$meaning"
+            return "异常响应状态码：$meaning"
         }
 
         /**
-         * 获取控制码或响应码含义
+         * 获取命令码或响应码含义
          *
          * @param F 主功能标识
          */
