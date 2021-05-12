@@ -56,7 +56,7 @@ fun main() = Window {
             Row(
                 modifier = Modifier.fillMaxSize()
             ) {
-                //todo 待优化结果展示
+                //todo 待优化结果展示布局
                 when (resultCode) {
                     is SecurityUnitFrameDecoder.SecurityUnitFrameDecodeResultCode.DONE -> {
                         Column(
@@ -78,6 +78,7 @@ fun main() = Window {
                         ) {
                             for (resultMap in resultList) Text(resultMap[ResultColumn.MeaningColumn]!!)
                         }
+                        // todo 增加点击显示含义详情
                     }
                     else -> {
                         Box(
@@ -111,7 +112,12 @@ sealed class ResultColumn {
     object AnalyzedColumn : ResultColumn()
 
     /**
-     * 解释列
+     * 简要解释列
      */
     object MeaningColumn : ResultColumn()
+
+    /**
+     * 详细解释
+     */
+    object MeaningDetails : ResultColumn()
 }

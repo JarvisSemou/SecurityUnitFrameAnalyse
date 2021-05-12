@@ -225,7 +225,11 @@ class SecurityUnitFrameDecoder {
                 map_C_or_A[ResultColumn.OriginColumn] = C_or_A.toZeroPrefixHexString()
                 map_C_or_A[ResultColumn.AnalyzedColumn] = C_or_A.toString()
                 map_C_or_A[ResultColumn.MeaningColumn] = C_or_A.get_C_or_A_Meaning(F)
-                map_C_or_A[ResultColumn.MeaningDetails] = "标识命令类型，最高位D7=0，D6-D0 命令码"
+                val C_or_A_MeaningDetails = C_or_A.get_C_or_A_MeaningDetails(F)
+                map_C_or_A[ResultColumn.MeaningDetails] = """
+                    标识命令类型，最高位D7=0，D6-D0 命令码。
+                    命令解释详情：$C_or_A_MeaningDetails
+                """.trimIndent()
                 if (isAcknoledgement) {
                     map_S[ResultColumn.OriginColumn] = S.toZeroPrefixHexString()
                     map_S[ResultColumn.AnalyzedColumn] = S.toString()
@@ -446,19 +450,24 @@ class SecurityUnitFrameDecoder {
                 与 BCD 的编码方式有冲突（不止与 8421 的 BCD 编码方式冲突），至使无法区分出密码字节中
                 哪些字节是 ASCII 编码，哪些字节是 BCD 编码，所以目前默认密码字节全是 BCD 编码，不支持
                 解析 ASCII 编码的字符。
-             */
-            //todo 写到这了
-            /*
+
+
             |   数据名称    |   字节数     |   数据格式    |   意义          |
             |-------------------------------------------------------------
             |   操作员密码   |       3    |      BCD     |   0-9，A-Z，a-z ，空格表示密码串的结束符
+
              */
             val map_1 = HashMap<ResultColumn, String>()
             val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharStartIndex + dataDomainCharLength)
             map_1[ResultColumn.OriginColumn] = data_1
             map_1[ResultColumn.AnalyzedColumn] = data_1
-            // todo 详细怎么加含义
-            map_1[ResultColumn.MeaningColumn] = "数据名称：操作员密码；字节数：3"
+            map_1[ResultColumn.MeaningColumn] = "操作员密码"
+            map_1[ResultColumn.MeaningDetails] = """
+                数据名称：操作员密码
+                字节数：3
+                数据格式：BCD （8421）
+                意义：包含 0-9 数字
+            """.trimIndent()
             resultList.add(map_1)
         }
 
@@ -604,7 +613,7 @@ class SecurityUnitFrameDecoder {
                         else -> "未知状态码"
                     }
                     0x06 -> when (this) {
-                        0x01 -> "置离线计数失败"
+                        0x01 -> "设置离线计数失败"
                         else -> "未知状态码"
                     }
                     0x07 -> when (this) {
@@ -802,6 +811,133 @@ class SecurityUnitFrameDecoder {
         }
 
         /**
+         * 获取命令码或响应码含义详情
+         *
+         * @param F 主功能标识
+         */
+        private fun Int.get_C_or_A_MeaningDetails(F: Int): String =
+            when (F) {
+                0x00 -> when (this and 0x7F) {
+                    0x01 -> "本命令获取安全单元工作状态"
+                    0x02 -> "本命令验证操作员的密码"
+                    0x03 -> "本命令修改操作员的密码"
+                    0x04 -> "将 C-ESAM 密码验证次数改为 0"
+                    0x05 -> "将 C-ESAM 密码验证次数恢复"
+                    0x06 -> "本命令用于安全单元初次发行"
+                    0x07 -> "本命令用于配置 ESAM "
+                    0x08 -> "存储关键数据"
+                    0x09 -> "读取关键数据"
+                    0x0A -> "往 ESAM 中透传"
+                    else -> "未知命令码"
+                }
+                0x01 -> when (this and 0x7F) {
+                    0x01 -> "从安全单元指定 ESAM 获取随机数"
+                    0x02 -> "加密给定数据"
+                    0x03 -> "应用层会话密钥加密数据并计算 MAC"
+                    0x04 -> "应用层会话密钥验证 MAC 解密密文"
+                    0x05 -> "转加密初始化"
+                    0x06 -> "设置安全单元密钥使用次数"
+                    0x07 -> "使用本地密钥计算传输 MAC"
+                    0x08 -> "使用本地密钥验证传输 MAC"
+                    0x09 -> "使用会话密钥计算传输 MAC"
+                    0x0A -> "使用会话密钥验证传输 MAC"
+                    else -> "未知命令码"
+                }
+                0x02 -> when (this and 0x7F) {
+                    0x01 -> "对电能表进行红外认证"
+                    0x02 -> "生成与电能表进行身份认证的密文和随机数"
+                    0x03 -> "电能表控制（09、13）"
+                    0x04 -> "电能表设参（09、13）"
+                    0x05 -> "电能表校时（09、13）"
+                    0x06 -> "电能表密钥更新（09）"
+                    0x07 -> "电能表密钥更新（13）"
+                    0x08 -> "电能表开户充值（09、13）"
+                    0x09 -> "698 电能表会话协商"
+                    0x0A -> "698 电能表会话协商验证"
+                    0x0B -> "698 电能表安全数据生成\n注：未设置离线计数器时，验保护码会失败。"
+                    0x0C -> "698 电能表安全传输解密"
+                    0x0D -> "698 电能表抄读数据验证"
+                    0x0E -> "698 电能表抄读 ESAM 参数验证"
+                    else -> "未知命令码"
+                }
+                0x03 -> when (this and 0x7F) {
+                    0x01 -> "链路层身份认证（非对称密钥协商）"
+                    0x02 -> "链路层会话密钥加密计算 MAC"
+                    0x03 -> "链路层会话密钥解密验证 MAC"
+                    0x04 -> "链路层会话密钥计算 MAC"
+                    0x05 -> "链路层会话密钥验证 MAC"
+                    else -> "未知命令码"
+                }
+                0x04 -> when (this and 0x7F) {
+                    0x01 -> "电子封印读认证生成 token1"
+                    0x02 -> "电子封印读认证验证 token2"
+                    0x03 -> "加密数据地址（读）"
+                    0x04 -> "解密读回数据"
+                    0x05 -> "电子封印写认证生成 token1"
+                    0x06 -> "电子封印写认证验证 token2"
+                    0x07 -> "加密数据地址（写）"
+                    0x08 -> "加密写数据"
+                    0x09 -> "解密执行结果"
+                    0x0A -> "加密密钥更新数据"
+                    else -> "未知命令码"
+                }
+                0x05 -> when (this and 0x7F) {
+                    0x01 -> "电子标签读认证生成 token1"
+                    0x02 -> "电子标签读认证验证 token2"
+                    0x03 -> "电子标签 MAC 计算"
+                    0x04 -> "电子标签解密"
+                    else -> "未知命令码"
+                }
+                0x06 -> when (this and 0x7F) {
+                    0x01 -> "与 W-ESAM 进行密钥协商"
+                    0x02 -> "与 W-ESAM 进行密钥协商"
+                    0x03 -> "会话密钥加密计算 MAC"
+                    0x04 -> "会话密钥解密验证 MAC"
+                    0x05 -> "会话密钥计算 MAC"
+                    0x06 -> "会话密钥验证 MAC"
+                    else -> "未知命令码"
+                }
+                0xFE -> when (this and 0x7F) {
+                    0x01 -> """
+                        :升级命令 1
+                        :
+                        :升级发起方是现场服务终端
+                        :
+                        :升级文件格式：
+                        :|--------------------------------------------------------------------------|
+                        :| 总块数 N | 检验和 | 数据长度 n1 | 数据密文 1 | ... | 数据长度 nn | 数据密文 N |
+                        :|  2 字节  | 1 字节 |   2 字节   | n1 个字节  | ... |   2 字节   |  nN 个字节 |
+                        :|-------------------------------------------------------------------------|
+                    """.trimMargin(":")
+                    0x02 -> """
+                        :升级命令 2
+                        :
+                        :升级发起方是安全单元
+                        :
+                        :升级文件格式：
+                        :|--------------------------------------------------------------------------|
+                        :| 总块数 N | 检验和 | 数据长度 n1 | 数据密文 1 | ... | 数据长度 nn | 数据密文 N |
+                        :|  2 字节  | 1 字节 |   2 字节   | n1 个字节  | ... |   2 字节   |  nN 个字节 |
+                        :|-------------------------------------------------------------------------|
+                    """.trimMargin(":")
+                    0x03 -> """
+                        :升级命令 3
+                        :
+                        :升级发起方是安全单元
+                        :
+                        :升级文件格式：
+                        :|--------------------------------------------------------------------------|
+                        :| 总块数 N | 检验和 | 数据长度 n1 | 数据密文 1 | ... | 数据长度 nn | 数据密文 N |
+                        :|  2 字节  | 1 字节 |   2 字节   | n1 个字节  | ... |   2 字节   |  nN 个字节 |
+                        :|-------------------------------------------------------------------------|
+                    """.trimMargin(":")
+                    0x04 -> "指定程序跳转命令"
+                    else -> "未知命令码"
+                }
+                else -> "未知主功能标识"
+            }
+
+        /**
          * 获取命令码或响应码含义
          *
          * @param F 主功能标识
@@ -828,7 +964,7 @@ class SecurityUnitFrameDecoder {
                     0x03 -> "应用层会话密钥加密算 MAC"
                     0x04 -> "应用层会话密钥解密验 MAC"
                     0x05 -> "转加密初始化"
-                    0x06 -> "置离线计数器"
+                    0x06 -> "设置离线计数器"
                     0x07 -> "本地密钥计算 MAC"
                     0x08 -> "本地密钥验证 MAC"
                     0x09 -> "会话密钥计算 MAC"
