@@ -15,7 +15,7 @@ fun main() = Window {
     MaterialTheme {
         var securityUnitFrame by remember { mutableStateOf("") }
 
-        val resultList = remember { mutableStateListOf<HashMap<ResultColumn, String>>() }
+        val resultList = remember { mutableStateListOf<HashMap<ResultType, String>>() }
 
         var resultCode by remember {
             mutableStateOf<SecurityUnitFrameDecoder.SecurityUnitFrameDecodeResultCode>(
@@ -57,26 +57,28 @@ fun main() = Window {
                 modifier = Modifier.fillMaxSize()
             ) {
                 //todo 待优化结果展示布局
+
                 when (resultCode) {
                     is SecurityUnitFrameDecoder.SecurityUnitFrameDecodeResultCode.DONE -> {
                         Column(
                             modifier = Modifier.fillMaxHeight()
                                 .fillMaxWidth(0.3f)
                         ) {
-                            for (resultMap in resultList) Text(resultMap[ResultColumn.OriginColumn]!!)
+                            for (resultMap in resultList) Text(resultMap[ResultType.Origin]!!)
                         }
+                        // todo 双击才显示分析结果
                         Column(
                             modifier = Modifier.fillMaxHeight()
                                 .fillMaxWidth(0.3f)
                         ) {
-                            for (resultMap in resultList) Text(resultMap[ResultColumn.AnalyzedColumn]!!)
+                            for (resultMap in resultList) Text(resultMap[ResultType.Analyzed]!!)
                         }
                         Column(
 //                            modifier = Modifier.fillMaxHeight()
 //                                .fillMaxWidth(0.4f)
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            for (resultMap in resultList) Text(resultMap[ResultColumn.MeaningColumn]!!)
+                            for (resultMap in resultList) Text(resultMap[ResultType.Meaning]!!)
                         }
                         // todo 增加点击显示含义详情
                     }
@@ -100,24 +102,24 @@ fun main() = Window {
 /**
  * 结果列
  */
-sealed class ResultColumn {
+sealed class ResultType {
     /**
      * 原始列
      */
-    object OriginColumn : ResultColumn()
+    object Origin : ResultType()
 
     /**
      * 解析后的列
      */
-    object AnalyzedColumn : ResultColumn()
+    object Analyzed : ResultType()
 
     /**
      * 简要解释列
      */
-    object MeaningColumn : ResultColumn()
+    object Meaning : ResultType()
 
     /**
      * 详细解释
      */
-    object MeaningDetails : ResultColumn()
+    object MeaningDetails : ResultType()
 }

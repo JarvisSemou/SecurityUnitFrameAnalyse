@@ -19,7 +19,7 @@ class SecurityUnitFrameDecoder {
          */
         fun decode(
             frame: String,
-            resultList: MutableList<HashMap<ResultColumn, String>>
+            resultList: MutableList<HashMap<ResultType, String>>
         ): SecurityUnitFrameDecodeResultCode {
             val decodeState: SecurityUnitFrameDecodeResultCode
             //字符串预处理----对数据域之外的部分去除空格、换行、转换为大写
@@ -153,6 +153,9 @@ class SecurityUnitFrameDecoder {
 
         /** DATA（数据域）在 frame 字符串中的起始字符索引编号 */
         private var dataDomainCharStartIndex by Delegates.notNull<Int>()
+
+        /** DATA（数据域）在 frame 字符串中的字符结束索引编号 */
+        private var dataDomainCharEndIndex by Delegates.notNull<Int>()
         private var F by Delegates.notNull<Int>()
         private var C_or_A by Delegates.notNull<Int>()
         private var C by Delegates.notNull<Int>()
@@ -172,7 +175,7 @@ class SecurityUnitFrameDecoder {
         @Suppress("LocalVariableName")
         private fun frameDecode(
             frame: String,
-            resultList: MutableList<HashMap<ResultColumn, String>>
+            resultList: MutableList<HashMap<ResultType, String>>
         ): SecurityUnitFrameDecodeResultCode {
             val decodeResultCode = SecurityUnitFrameDecodeResultCode.DONE
             resultList.clear()
@@ -202,40 +205,41 @@ class SecurityUnitFrameDecoder {
                 dataDomainCharStartIndex = 8
             }
             dataDomainCharLength = dataDomainByteLength * 2
+            dataDomainCharEndIndex = dataDomainCharStartIndex + dataDomainCharLength
 
             // 填充 E9 LH LL F C A S
-            val map_E9 = HashMap<ResultColumn, String>()
-            val map_LHLL = HashMap<ResultColumn, String>()
-            val map_F = HashMap<ResultColumn, String>()
-            val map_C_or_A = HashMap<ResultColumn, String>()
-            val map_S = HashMap<ResultColumn, String>()
-            map_E9[ResultColumn.OriginColumn] = E9
-            map_E9[ResultColumn.AnalyzedColumn] = E9
-            map_E9[ResultColumn.MeaningColumn] = "帧起始码"
-            map_E9[ResultColumn.MeaningDetails] = "标识一桢信息的开始"
-            map_LHLL[ResultColumn.OriginColumn] = frameByteLength.toZeroPrefixHexString(2)
-            map_LHLL[ResultColumn.AnalyzedColumn] = frameByteLength.toString()
-            map_LHLL[ResultColumn.MeaningColumn] = "帧长度"
-            map_LHLL[ResultColumn.MeaningDetails] = "标识从主功能标识开始到数据域最后1字节结束的字节数。2字节16进制数，高字节在前，低字节在后"
-            map_F[ResultColumn.OriginColumn] = F.toZeroPrefixHexString()
-            map_F[ResultColumn.AnalyzedColumn] = F.toString()
-            map_F[ResultColumn.MeaningColumn] = F.get_F_Meaning()
-            map_F[ResultColumn.MeaningDetails] = "表示主命令类型"
+            val map_E9 = HashMap<ResultType, String>()
+            val map_LHLL = HashMap<ResultType, String>()
+            val map_F = HashMap<ResultType, String>()
+            val map_C_or_A = HashMap<ResultType, String>()
+            val map_S = HashMap<ResultType, String>()
+            map_E9[ResultType.Origin] = E9
+            map_E9[ResultType.Analyzed] = E9
+            map_E9[ResultType.Meaning] = "帧起始码"
+            map_E9[ResultType.MeaningDetails] = "标识一桢信息的开始"
+            map_LHLL[ResultType.Origin] = frameByteLength.toZeroPrefixHexString(2)
+            map_LHLL[ResultType.Analyzed] = frameByteLength.toString()
+            map_LHLL[ResultType.Meaning] = "帧长度"
+            map_LHLL[ResultType.MeaningDetails] = "标识从主功能标识开始到数据域最后1字节结束的字节数。2字节16进制数，高字节在前，低字节在后"
+            map_F[ResultType.Origin] = F.toZeroPrefixHexString()
+            map_F[ResultType.Analyzed] = F.toString()
+            map_F[ResultType.Meaning] = F.get_F_Meaning()
+            map_F[ResultType.MeaningDetails] = "表示主命令类型"
             if (!isFE03Acknowledgement) {
-                map_C_or_A[ResultColumn.OriginColumn] = C_or_A.toZeroPrefixHexString()
-                map_C_or_A[ResultColumn.AnalyzedColumn] = C_or_A.toString()
-                map_C_or_A[ResultColumn.MeaningColumn] = C_or_A.get_C_or_A_Meaning(F)
+                map_C_or_A[ResultType.Origin] = C_or_A.toZeroPrefixHexString()
+                map_C_or_A[ResultType.Analyzed] = C_or_A.toString()
+                map_C_or_A[ResultType.Meaning] = C_or_A.get_C_or_A_Meaning(F)
                 val C_or_A_MeaningDetails = C_or_A.get_C_or_A_MeaningDetails(F)
-                map_C_or_A[ResultColumn.MeaningDetails] = """
+                map_C_or_A[ResultType.MeaningDetails] = """
                     标识命令类型，最高位D7=0，D6-D0 命令码。
                     命令解释详情：$C_or_A_MeaningDetails
                 """.trimIndent()
                 if (isAcknoledgement) {
-                    map_S[ResultColumn.OriginColumn] = S.toZeroPrefixHexString()
-                    map_S[ResultColumn.AnalyzedColumn] = S.toString()
-                    map_S[ResultColumn.MeaningColumn] = S.get_S_Meaning(F, A)
-                    map_C_or_A[ResultColumn.MeaningDetails] = "标识响应类型，最高位 D7=1，D6-D0 响应码与命令码相同"
-                    map_S[ResultColumn.MeaningDetails] = "标识响应状态，仅适用于响应帧，00 表示正常响应，非 00 为异常响应"
+                    map_S[ResultType.Origin] = S.toZeroPrefixHexString()
+                    map_S[ResultType.Analyzed] = S.toString()
+                    map_S[ResultType.Meaning] = S.get_S_Meaning(F, A)
+                    map_C_or_A[ResultType.MeaningDetails] = "标识响应类型，最高位 D7=1，D6-D0 响应码与命令码相同"
+                    map_S[ResultType.MeaningDetails] = "标识响应状态，仅适用于响应帧，00 表示正常响应，非 00 为异常响应"
                 }
             }
             resultList.add(map_E9)
@@ -249,16 +253,16 @@ class SecurityUnitFrameDecoder {
             if (dataDomainByteLength != 0) parseFrameData(frame, resultList)
 
             // 填充 CS E6
-            val map_CS = HashMap<ResultColumn, String>()
-            val map_E6 = HashMap<ResultColumn, String>()
-            map_CS[ResultColumn.OriginColumn] = CS.toZeroPrefixHexString()
-            map_CS[ResultColumn.AnalyzedColumn] = Integer.parseInt(CS, 16).toString()
-            map_CS[ResultColumn.MeaningColumn] = "帧校验"
-            map_CS[ResultColumn.MeaningDetails] = "帧起始码到数据域最后一个字节的算术和（模256）"
-            map_E6[ResultColumn.OriginColumn] = E6
-            map_E6[ResultColumn.AnalyzedColumn] = E6
-            map_E6[ResultColumn.MeaningColumn] = "帧结束码"
-            map_E6[ResultColumn.MeaningDetails] = "标识一桢信息的结束"
+            val map_CS = HashMap<ResultType, String>()
+            val map_E6 = HashMap<ResultType, String>()
+            map_CS[ResultType.Origin] = CS.toZeroPrefixHexString()
+            map_CS[ResultType.Analyzed] = Integer.parseInt(CS, 16).toString()
+            map_CS[ResultType.Meaning] = "帧校验"
+            map_CS[ResultType.MeaningDetails] = "帧起始码到数据域最后一个字节的算术和（模256）"
+            map_E6[ResultType.Origin] = E6
+            map_E6[ResultType.Analyzed] = E6
+            map_E6[ResultType.Meaning] = "帧结束码"
+            map_E6[ResultType.MeaningDetails] = "标识一桢信息的结束"
             resultList.add(map_CS)
             resultList.add(map_E6)
 
@@ -273,7 +277,7 @@ class SecurityUnitFrameDecoder {
          */
         private fun parseFrameData(
             frame: String,
-            resultList: MutableList<HashMap<ResultColumn, String>>
+            resultList: MutableList<HashMap<ResultType, String>>
         ) {
             // 特殊情况：安全单元升级命令 F=0xFE, C=0x03 命令的返回帧无响应码（A），只能单独处理帧数据域解析
             if (isFE03Acknowledgement) {
@@ -285,10 +289,10 @@ class SecurityUnitFrameDecoder {
                 // 安全单元自身操作命令
 //                0x0001 -> parse_0001_DataDomain(frame,resultList) // 无数据域
                 0x0002 -> parse_0002_DataDomain(frame, resultList)
-//                0x0003->parse_0003_DataDomain(frame,resultList)
-//                0x0004->parse_0004_DataDomain(frame,resultList)
-//                0x0005->parse_0005_DataDomain(frame,resultList)
-//                0x0006->parse_0006_DataDomain(frame,resultList)
+                0x0003 -> parse_0003_DataDomain(frame, resultList)
+                0x0004 -> parse_0004_DataDomain(frame, resultList)
+                0x0005 -> parse_0005_DataDomain(frame, resultList)
+                0x0006 -> parse_0006_DataDomain(frame, resultList)
 //                0x0007->parse_0007_DataDomain(frame,resultList)
 //                0x0008->parse_0008_DataDomain(frame,resultList)
 //                0x0009->parse_0009_DataDomain(frame,resultList)
@@ -418,7 +422,132 @@ class SecurityUnitFrameDecoder {
             }
         }
 
-        private fun parse_0002_DataDomain(frame: String, resultList: MutableList<HashMap<ResultColumn, String>>) {
+        private fun parse_0006_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = HashMap<ResultType, String>()    // ESAM 类型
+            val map_2 = HashMap<ResultType, String>()    // 发行数据内容
+
+            val data_1_byteLength = 1
+            val data_2_byteLength = dataDomainByteLength - 1
+
+            val data_2_offset = 0 + data_1_byteLength * 2
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
+            val data_2 = frame.substring(data_2_offset, dataDomainCharEndIndex)
+
+            val data_2_1_byteLength = 2
+            val data_2_2_byteLength = data_2_byteLength - data_2_1_byteLength
+
+            val data_2_2_offset = 0 + data_2_1_byteLength * 2
+
+            val data_2_1 = data_2.substring(0, data_2_2_offset)
+            val data_2_2 = data_2.substring(data_2_2_offset)
+
+            map_1[ResultType.Origin] = data_1.toZeroPrefixHexString(data_1_byteLength)
+            map_1[ResultType.Analyzed] = data_1.toZeroPrefixHexString(data_1_byteLength)
+            map_1[ResultType.Meaning] = ""
+        }
+
+        private fun parse_0005_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = HashMap<ResultType, String>()    // 解锁数据
+            //val data_1_byteLength=28
+            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+
+            val data_1_1_byteLength = 8
+            val data_1_2_byteLength = 16
+            val data_1_3_byteLength = 2
+            val data_1_4_byteLength = 2
+
+            val data_1_2_offset = 0 + data_1_1_byteLength * 2
+            val data_1_3_offset = data_1_2_offset + data_1_2_byteLength * 2
+            val data_1_4_offset = data_1_3_offset + data_1_3_byteLength * 2
+
+            val data_1_1 = data_1.substring(0, data_1_2_offset)    // 认证数据
+            val data_1_2 = data_1.substring(data_1_2_offset, data_1_3_offset)  // 密码密文
+            val data_1_3 = data_1.substring(data_1_3_offset, data_1_4_offset)  // 最大密码尝试次数
+            val data_1_4 = data_1.substring(data_1_4_offset)  // 剩余密码尝试次数
+
+            map_1[ResultType.Origin] = """
+                ${data_1_1.toZeroPrefixHexString(data_1_1_byteLength)}
+                ${data_1_2.toZeroPrefixHexString(data_1_2_byteLength)}
+                ${data_1_3.toZeroPrefixHexString(data_1_3_byteLength)}
+                ${data_1_4.toZeroPrefixHexString(data_1_4_byteLength)}
+            """.trimIndent()
+            map_1[ResultType.Analyzed] = """
+                认证数据：${data_1_1.toZeroPrefixHexString(data_1_1_byteLength)}
+                密码密文：${data_1_2.toZeroPrefixHexString(data_1_2_byteLength)}
+                最大密码尝试次数：${data_1_3.toZeroPrefixHexString(data_1_3_byteLength)}
+                剩余密码尝试次数：${data_1_4.toZeroPrefixHexString(data_1_4_byteLength)}
+            """.trimIndent()
+            map_1[ResultType.Meaning] = "解锁数据"
+            map_1[ResultType.MeaningDetails] = """
+                |数据名称：解锁数据
+                |字节数：28
+                |数据格式：HEX
+                |意义：
+                |   认证数据（8B）
+                |   密码密文（16B）
+                |   最大密码尝试次数（2B）
+                |   剩余密码尝试次数（2B）
+            """.trimMargin()
+            resultList.add(map_1)
+        }
+
+        private fun parse_0004_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = HashMap<ResultType, String>()    // 认证数据
+            val data_1_byteLength = 8
+            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+            map_1[ResultType.Origin] = data_1.toZeroPrefixHexString(data_1_byteLength)
+            map_1[ResultType.Analyzed] = data_1.toZeroPrefixHexString(data_1_byteLength)
+            map_1[ResultType.Meaning] = "认证数据"
+            map_1[ResultType.MeaningDetails] = """
+                数据名称：认证数据
+                字节数：8
+                数据格式：HEX
+                意义：
+            """.trimIndent()
+            resultList.add(map_1)
+        }
+
+        private fun parse_0003_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            /*
+            关于操作员密码的编码处理方式请看 parse_0002_DataDomain 方法
+             */
+            val map_1 = HashMap<ResultType, String>()    // 旧操作员密码
+            val map_2 = HashMap<ResultType, String>()       // 新操作员密码
+
+            val data_1_byteLength = 3
+            val data_2_byteLength = 3
+
+            val data_2_offset = dataDomainCharStartIndex + data_1_byteLength * 2
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
+            val data_2 = frame.substring(data_2_offset, dataDomainCharEndIndex)
+
+            map_1[ResultType.Origin] = data_1.toZeroPrefixHexString(data_1_byteLength)
+            map_1[ResultType.Analyzed] = data_1.toZeroPrefixHexString(data_1_byteLength)
+            map_1[ResultType.Meaning] = "旧操作员密码"
+            map_1[ResultType.MeaningDetails] = """
+                数据名称：旧操作员密码
+                字节数：3
+                数据格式：BCD （8421）
+                意义：包含 0-9 数字
+            """.trimIndent()
+
+            map_2[ResultType.Origin] = data_2.toZeroPrefixHexString(data_2_byteLength)
+            map_2[ResultType.Analyzed] = data_2.toZeroPrefixHexString(data_2_byteLength)
+            map_2[ResultType.Meaning] = "新操作员密码"
+            map_2[ResultType.MeaningDetails] = """
+                数据名称：新操作员密码
+                字节数：3
+                数据格式：BCD （8421）
+                意义：包含 0-9 数字
+            """.trimIndent()
+
+            resultList.add(map_1)
+            resultList.add(map_2)
+        }
+
+        private fun parse_0002_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
             /*
             --------------------------------
             |       8421 BCD 编码方式       |
@@ -450,19 +579,14 @@ class SecurityUnitFrameDecoder {
                 与 BCD 的编码方式有冲突（不止与 8421 的 BCD 编码方式冲突），至使无法区分出密码字节中
                 哪些字节是 ASCII 编码，哪些字节是 BCD 编码，所以目前默认密码字节全是 BCD 编码，不支持
                 解析 ASCII 编码的字符。
-
-
-            |   数据名称    |   字节数     |   数据格式    |   意义          |
-            |-------------------------------------------------------------
-            |   操作员密码   |       3    |      BCD     |   0-9，A-Z，a-z ，空格表示密码串的结束符
-
              */
-            val map_1 = HashMap<ResultColumn, String>()
-            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharStartIndex + dataDomainCharLength)
-            map_1[ResultColumn.OriginColumn] = data_1
-            map_1[ResultColumn.AnalyzedColumn] = data_1
-            map_1[ResultColumn.MeaningColumn] = "操作员密码"
-            map_1[ResultColumn.MeaningDetails] = """
+            val map_1 = HashMap<ResultType, String>() // 操作员密码
+            val data_1_byteLength = 3
+            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+            map_1[ResultType.Origin] = data_1.toZeroPrefixHexString(data_1_byteLength)
+            map_1[ResultType.Analyzed] = data_1.toZeroPrefixHexString(data_1_byteLength)
+            map_1[ResultType.Meaning] = "操作员密码"
+            map_1[ResultType.MeaningDetails] = """
                 数据名称：操作员密码
                 字节数：3
                 数据格式：BCD （8421）
