@@ -1,5 +1,7 @@
 @file:Suppress("LocalVariableName")
 
+import java.nio.charset.Charset
+import java.util.*
 import kotlin.properties.Delegates
 
 /**
@@ -17,6 +19,7 @@ class SecurityUnitFrameDecoder {
          * @param frame 安全单元中帧
          * @param resultList 存放结果的列表
          */
+        @ExperimentalUnsignedTypes
         fun decode(
             frame: String,
             resultList: MutableList<HashMap<ResultType, String>>
@@ -172,6 +175,7 @@ class SecurityUnitFrameDecoder {
          * @param resultList 解析结果列表
          * @return SecurityUnitFrameDecodeResultCode @link{SecurityUnitFrameDecodeResultCode}
          */
+        @ExperimentalUnsignedTypes
         @Suppress("LocalVariableName")
         private fun frameDecode(
             frame: String,
@@ -279,6 +283,7 @@ class SecurityUnitFrameDecoder {
          * @param frame 帧
          * @param resultList 存放结果的列表
          */
+        @ExperimentalUnsignedTypes
         private fun parseFrameData(
             frame: String,
             resultList: MutableList<HashMap<ResultType, String>>
@@ -426,26 +431,27 @@ class SecurityUnitFrameDecoder {
             }
         }
 
+        @ExperimentalUnsignedTypes
         private fun parse_0081_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
-            val map_1 = HashMap<ResultType, String>()  // 安全单元状态字
-            val map_2 = HashMap<ResultType, String>()  // 软件版本号
-            val map_3 = HashMap<ResultType, String>()  // 硬件版本号
-            val map_4 = HashMap<ResultType, String>()  // C-ESAM 序列号
-            val map_5 = HashMap<ResultType, String>()  // 操作者代码
-            val map_6 = HashMap<ResultType, String>()  // 权限
-            val map_7 = HashMap<ResultType, String>()  // 权限掩码
-            val map_8 = HashMap<ResultType, String>()  // 操作者信息
-            val map_9 = HashMap<ResultType, String>()  // Y-ESAM 序列号
-            val map_10 = HashMap<ResultType, String>() // Y-ESAM 对称密钥版本
-            val map_11 = HashMap<ResultType, String>() // 主站证书版本号
-            val map_12 = HashMap<ResultType, String>() // 终端证书版本号
-            val map_13 = HashMap<ResultType, String>() // 主站证书序列号
-            val map_14 = HashMap<ResultType, String>() // 终端证书序列号
-            val map_15 = HashMap<ResultType, String>() // 当前计数器
-            val map_16 = HashMap<ResultType, String>() // 转加密剩余次数
-            val map_17 = HashMap<ResultType, String>() // 标签密钥版本
-            val map_18 = HashMap<ResultType, String>() // 主站证书
-            val map_19 = HashMap<ResultType, String>() // 终端证书
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "安全单元状态字")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "软件版本号")
+            val map_3 = hashMapOf<ResultType, String>(ResultType.Meaning to "硬件版本号")
+            val map_4 = hashMapOf<ResultType, String>(ResultType.Meaning to "C-ESAM 序列号")
+            val map_5 = hashMapOf<ResultType, String>(ResultType.Meaning to "操作者代码")
+            val map_6 = hashMapOf<ResultType, String>(ResultType.Meaning to "权限")
+            val map_7 = hashMapOf<ResultType, String>(ResultType.Meaning to "权限掩码")
+            val map_8 = hashMapOf<ResultType, String>(ResultType.Meaning to "操作者信息")
+            val map_9 = hashMapOf<ResultType, String>(ResultType.Meaning to "Y-ESAM 序列号")
+            val map_10 = hashMapOf<ResultType, String>(ResultType.Meaning to "Y-ESAM 对称密钥版本")
+            val map_11 = hashMapOf<ResultType, String>(ResultType.Meaning to "主站证书版本号")
+            val map_12 = hashMapOf<ResultType, String>(ResultType.Meaning to "终端证书版本号")
+            val map_13 = hashMapOf<ResultType, String>(ResultType.Meaning to "主站证书序列号")
+            val map_14 = hashMapOf<ResultType, String>(ResultType.Meaning to "终端证书序列号")
+            val map_15 = hashMapOf<ResultType, String>(ResultType.Meaning to "当前计数器")
+            val map_16 = hashMapOf<ResultType, String>(ResultType.Meaning to "转加密剩余次数")
+            val map_17 = hashMapOf<ResultType, String>(ResultType.Meaning to "标签密钥版本")
+            val map_18 = hashMapOf<ResultType, String>(ResultType.Meaning to "主站证书")
+            val map_19 = hashMapOf<ResultType, String>(ResultType.Meaning to "终端证书")
 
             val data_1_byteLength = 1
             val data_2_byteLength = 3
@@ -465,7 +471,7 @@ class SecurityUnitFrameDecoder {
             val data_16_byteLength = 4
             val data_17_byteLength = 8
             var data_18_byteLength by Delegates.notNull<Int>()
-            var data_19_byteLength by Delegates.notNull<Int>()
+            val data_19_byteLength by Delegates.notNull<Int>()
 
             val data_2_offset = dataDomainCharStartIndex + data_1_byteLength * 2
             val data_3_offset = data_2_offset + data_2_byteLength * 2
@@ -484,7 +490,7 @@ class SecurityUnitFrameDecoder {
             val data_16_offset = data_15_offset + data_15_byteLength * 2
             val data_17_offset = data_16_offset + data_16_byteLength * 2
             val data_18_offset = data_17_offset + data_17_byteLength * 2
-            var data_19_offset = Delegates.notNull<Int>()
+            var data_19_offset by Delegates.notNull<Int>()
 
             val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
             val data_2 = frame.substring(data_2_offset, data_3_offset)
@@ -521,88 +527,233 @@ class SecurityUnitFrameDecoder {
                 0x01 -> "Y-ESAM 故障"
                 else -> "保留，状态未定义"
             }
-            map_1[ResultType.Origin] = data_1.toZeroPrefixHexString(data_1_byteLength)
-            map_1[ResultType.Analyzed] = """
-                工作状态：$esamWorkStatus
-                操作员 ESAM 状态：$c_esamStatus
-                业务 ESAM 状态：$y_esamStatus
-            """.trimIndent()
-            map_1[ResultType.Meaning] = "安全单元状态字"
-            map_1[ResultType.MeaningDetails] = """
-                :数据名称：${map_1[ResultType.Meaning]}
-                :字节数：1
-                :数据格式：HEX
-                :意义：
-                :
-                :|--------------------------------------------------------
-                :|  D7  |  D6  |  D5  |  D4  |  D3  |  D2  |  D1  |  D0  |
-                :|---------------------------|-------------|-------------|
-                :| 工作状态                   | C-ESAM 状态  | Y-ESAM 状态 |
-                :|---------------------------|---------------------------|
-                :| 0000：模块正常，可接收指令   | 00 ESAM 正常 | 00 ESAM 正常|
-                :| 0001：存贮器错误            | 01 ESAM 故障 | 01 ESAM 故障|
-                :| 0002：保留                 | 1X 保留      | 1X 保留     |
-                :|--------------------------------------------------------
-                :
-            """.trimMargin(":")
+            map_1 += hashMapOf(
+                ResultType.Origin to data_1.toZeroPrefixHexString(data_1_byteLength),
+                ResultType.Analyzed to """
+                    工作状态：$esamWorkStatus
+                    操作员 ESAM 状态：$c_esamStatus
+                    业务 ESAM 状态：$y_esamStatus
+                """.trimIndent(),
+                ResultType.MeaningDetails to """
+                    :$DATA_NAME${map_1[ResultType.Meaning]}
+                    :${DATA_COUNT}$data_1_byteLength
+                    :${DATA_FORMAT}HEX
+                    :$DATA_MEANING_DETAILS
+                    :
+                    :|--------------------------------------------------------
+                    :|  D7  |  D6  |  D5  |  D4  |  D3  |  D2  |  D1  |  D0  |
+                    :|---------------------------|-------------|-------------|
+                    :| 工作状态                   | C-ESAM 状态  | Y-ESAM 状态 |
+                    :|---------------------------|---------------------------|
+                    :| 0000：模块正常，可接收指令   | 00 ESAM 正常 | 00 ESAM 正常|
+                    :| 0001：存贮器错误            | 01 ESAM 故障 | 01 ESAM 故障|
+                    :| 0002：保留                 | 1X 保留      | 1X 保留     |
+                    :|--------------------------------------------------------
+                    :
+                """.trimMargin(":")
+            )
 
-            map_2[ResultType.Origin] = data_2.toZeroPrefixHexString(data_2_byteLength)
             val bootVersion = data_2.substring(0, 2)
             val appVersion = data_2.substring(2)
-            map_2[ResultType.Analyzed] = """
-                boot 版本：$bootVersion （${bootVersion.parseHexAsDecInt()}）
-                APP 版本：$appVersion （${appVersion.parseHexAsDecInt()}）
-            """.trimIndent()
-            map_2[ResultType.Meaning] = "软件版本号"
-            map_2[ResultType.MeaningDetails] = """
-                数据名称：${map_2[ResultType.Meaning]}
-                字节数：3
-                数据格式：HEX
-                意义：
-                第一个字节是 boot 程序版本号
-                后两个字节是 APP 程序版本号
-            """.trimIndent()
+            map_2 += hashMapOf(
+                ResultType.Origin to data_2.toZeroPrefixHexString(data_2_byteLength),
+                ResultType.Analyzed to """
+                    boot 版本：$bootVersion （${bootVersion.parseHexAsDecInt()}）
+                    APP 版本：$appVersion （${appVersion.parseHexAsDecInt()}）
+                """.trimIndent(),
+                ResultType.MeaningDetails to """
+                    $DATA_NAME${map_2[ResultType.Meaning]}
+                    ${DATA_COUNT}$data_2_byteLength
+                    $DATA_FORMAT_HEX
+                    $DATA_MEANING_DETAILS
+                    第一个字节是 boot 程序版本号
+                    后两个字节是 APP 程序版本号
+                """.trimIndent()
+            )
 
-            map_3[ResultType.Origin] = data_3.toZeroPrefixHexString(data_3_byteLength)
             val v1 = data_3.substring(0, 2)
             val v2 = data_3.substring(2)
-            map_3[ResultType.Analyzed] = """
-                安全单元改版编号：$v1 （${v1.parseHexAsDecInt()}）
-                安全单元本版编号：$v2 （${v2.parseHexAsDecInt()}）
-            """.trimIndent()
-            map_3[ResultType.Meaning] = "硬件版本号"
-            map_3[ResultType.MeaningDetails] = """
-                数据名称：${map_3[ResultType.Meaning]}
-                字节数：3
-                数据格式：HEX
-                意义：
-                第一个字节是安全单元改版编号
-                后二个字节是安全单元本版编号
-            """.trimIndent()
+            map_3 += hashMapOf(
+                ResultType.Origin to data_3.toZeroPrefixHexString(data_3_byteLength),
+                ResultType.Analyzed to """
+                    安全单元改版编号：$v1 （${v1.parseHexAsDecInt()}）
+                    安全单元本版编号：$v2 （${v2.parseHexAsDecInt()}）
+                """.trimIndent(),
+                ResultType.MeaningDetails to """
+                    $DATA_NAME${map_3[ResultType.Meaning]}
+                    ${DATA_COUNT}$data_3_byteLength
+                    $DATA_FORMAT_HEX
+                    $DATA_MEANING_DETAILS
+                    第一个字节是安全单元改版编号
+                    后二个字节是安全单元本版编号
+                """.trimIndent()
+            )
 
             map_4.parsePlainHexData(
                 data_4,
-                "C-ESAM 序列号",
                 data_4_byteLength
             )
 
             map_5.parsePlainHexData(
                 data_5,
-                "操作者代码",
                 data_5_byteLength
+            ) { meaning, _, _, _, _, preDes ->
+                preDes + """
+                    $meaning
+                """.trimIndent()
+            }
+
+            map_6.parseDecHexData(
+                data_6,
+                data_6_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    有效范围：1-15
+                """.trimIndent()
+            }
+
+            map_7.parsePlainHexData(
+                data_7,
+                data_7_byteLength
             )
 
-            // todo 写到这了
-            //map_6.parsePlainHexData(data_6, "", data_6_byteLength) {}
+            val name = data_8.substring(0, 10).parseHexAsUTF8String()
+            val unit = data_8.substring(10).parseHexAsUTF8String()
+            map_8 += hashMapOf(
+                ResultType.Origin to data_8.toZeroPrefixHexString(data_8_byteLength),
+                ResultType.Analyzed to """
+                    姓名：$name
+                    单位：$unit
+                """.trimIndent(),
+                ResultType.MeaningDetails to """
+                    $DATA_NAME${map_8[ResultType.Meaning]}
+                    $DATA_COUNT$data_8_byteLength
+                    ${DATA_FORMAT}HEX
+                    $DATA_MEANING_DETAILS
+                    姓名和单位信息（姓名 5 个汉字；单位信息 10 个汉字）
+                """.trimIndent()
+            )
 
+            map_9.parsePlainHexData(
+                data_9,
+                data_9_byteLength
+            )
 
-            // todo 解析出 data_18  length 后，再解析 data_19 的 offset 和 byte_length 和数据
+            map_10.parsePlainHexData(
+                data_10,
+                data_19_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    最新更新的对称密钥密钥版本，初始值为全00
+                """.trimIndent()
+            }
+
+            map_11.parseDecHexData(
+                data_11,
+                data_11_byteLength
+            )
+
+            map_12.parseDecHexData(
+                data_12,
+                data_12_byteLength
+            )
+
+            map_13.parsePlainHexData(
+                data_13,
+                data_13_byteLength
+            )
+
+            map_14.parsePlainHexData(
+                data_14,
+                data_14_byteLength
+            )
+
+            map_15.parseDecHexData(
+                data_15,
+                data_15_byteLength
+            )
+
+            map_16.parseDecHexData(
+                data_16,
+                data_16_byteLength
+            )
+
+            map_17.parsePlainHexData(
+                data_17,
+                data_17_byteLength
+            )
+
+            val (data_18_1, data_18_2) = data_18.parse_2_N_HexData()
+            data_18_byteLength = 2 + data_18_1.parseHexAsDecInt()
+            map_18 += hashMapOf(
+                ResultType.Origin to """
+                    $data_18_1
+                    $data_18_2
+                """.trimIndent(),
+                ResultType.Analyzed to """
+                    证书长度：${data_18_1.parseHexAsDecInt()}
+                    证书数据：
+                    $data_18_2
+                """.trimIndent(),
+                ResultType.MeaningDetails to """
+                    $DATA_NAME${map_18[ResultType.Meaning]}
+                    ${DATA_COUNT}2 + N
+                    $DATA_FORMAT_HEX
+                    $DATA_MEANING_DETAILS
+                    证书长度 + 证书数据
+                """.trimIndent()
+            )
+
+            data_19_offset = data_18_offset + data_18_byteLength * 2
+            val data_19: String = frame.substring(data_19_offset, dataDomainCharEndIndex)
+            val (data_19_1, data_19_2) = data_19.parse_2_N_HexData()
+            //data_19_byteLength = 2 + data_19_1.parseHexAsDecInt()
+            map_19 += hashMapOf(
+                ResultType.Origin to """
+                    $data_19_1
+                    $data_19_2
+                """.trimIndent(),
+                ResultType.Analyzed to """
+                    证书长度：${data_19_1.parseHexAsDecInt()}
+                    证书数据：
+                    $data_19_2
+                """.trimIndent(),
+                ResultType.MeaningDetails to """
+                    $DATA_NAME${map_19[ResultType.Meaning]}
+                    ${DATA_COUNT}2 + N
+                    $DATA_FORMAT_HEX
+                    $DATA_MEANING_DETAILS
+                    证书长度 + 证书数据
+                """.trimIndent()
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2,
+                map_3,
+                map_4,
+                map_5,
+                map_6,
+                map_7,
+                map_8,
+                map_9,
+                map_10,
+                map_11,
+                map_12,
+                map_13,
+                map_14,
+                map_15,
+                map_16,
+                map_17,
+                map_18,
+                map_19
+            )
 
         }
 
         private fun parse_000A_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
-            val map_1 = HashMap<ResultType, String>()    // ESAM 类型
-            val map_2 = HashMap<ResultType, String>()    // 转发数据内容
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "ESAM 类型")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "转发数据内容")
 
             val data_1_byteLength = 1
             //val data_2_byteLength = dataDomainByteLength - 1
@@ -612,15 +763,15 @@ class SecurityUnitFrameDecoder {
             val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
             val data_2 = frame.substring(data_2_offset, dataDomainCharEndIndex)
 
-            val (data_2_1, data_2_2) = parse_2_N_Data(data_2)
+            val (data_2_1, data_2_2) = data_2.parse_2_N_HexData()
 
             map_1.parsePlainHexData(
                 data_1,
-                "ESAM 类型：" + parseEsamType(data_2_1),
-                data_1_byteLength
+                data_1_byteLength,
+                "ESAM 类型：" + parseEsamType(data_2_1)
             ) { _, _, byteCountDes, dataFormatDes, meaningDetailsDes, _ ->
                 """
-                    |数据名称：ESAM 类型
+                    |${DATA_NAME}ESAM 类型
                     |$byteCountDes
                     |$dataFormatDes
                     |$meaningDetailsDes
@@ -629,21 +780,24 @@ class SecurityUnitFrameDecoder {
             """.trimMargin()
             }
 
-            map_2[ResultType.Origin] = """
-                $data_2_1
-                $data_2_2
-            """.trimIndent()
-            map_2[ResultType.Analyzed] = """
-                转发数据内容长度：${data_2_1.parseHexAsDecInt()}
-                转发数据内容：$data_2_2
-            """.trimIndent()
-            map_2[ResultType.Meaning] = "转发数据内容"
-            map_2[ResultType.MeaningDetails] = """
-                数据名称：${map_2[ResultType.Meaning]}
-                字节数：2 + N
-                数据格式：HEX
-                意义：转发数据内容
-            """.trimIndent()
+            map_2 += hashMapOf(
+                ResultType.Origin to """
+                    $data_2_1
+                    $data_2_2
+                """.trimIndent(),
+                ResultType.Analyzed to """
+                    转发数据内容长度：${data_2_1.parseHexAsDecInt()}
+                    转发数据内容：
+                    $data_2_2
+                """.trimIndent(),
+                ResultType.MeaningDetails to """
+                    $DATA_NAME${map_2[ResultType.Meaning]}
+                    ${DATA_COUNT}2 + N
+                    $DATA_FORMAT_HEX
+                    $DATA_MEANING_DETAILS
+                    ${map_2[ResultType.Meaning]}
+                """.trimIndent()
+            )
 
             resultList.addResults(
                 map_1,
@@ -652,10 +806,10 @@ class SecurityUnitFrameDecoder {
         }
 
         private fun parse_0009_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
-            val map_1 = HashMap<ResultType, String>()  // 文件编号
-            val map_2 = HashMap<ResultType, String>()  // 操作模式
-            val map_3 = HashMap<ResultType, String>()  // 偏移地址
-            val map_4 = HashMap<ResultType, String>()  // 数据长度
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "文件编号")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "操作模式")
+            val map_3 = hashMapOf<ResultType, String>(ResultType.Meaning to "偏移地址")
+            val map_4 = hashMapOf<ResultType, String>(ResultType.Meaning to "数据长度")
 
             val data_1_byteLength = 2
             val data_2_byteLength = 1
@@ -673,25 +827,21 @@ class SecurityUnitFrameDecoder {
 
             map_1.parseDecHexData(
                 data_1,
-                "文件编号",
                 data_1_byteLength
             )
 
             map_2.parsePlainHexData(
                 data_2,
-                "操作模式",
                 data_2_byteLength
             )
 
             map_3.parseDecHexData(
                 data_3,
-                "偏移地址",
                 data_3_byteLength
             )
 
             map_4.parseDecHexData(
                 data_4,
-                "数据长度",
                 data_4_byteLength
             ) { _, _, _, _, _, preDes ->
                 preDes + """
@@ -708,11 +858,11 @@ class SecurityUnitFrameDecoder {
         }
 
         private fun parse_0008_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
-            val map_1 = HashMap<ResultType, String>()  // 文件编号
-            val map_2 = HashMap<ResultType, String>()  // 操作模式
-            val map_3 = HashMap<ResultType, String>()  // 偏移地址
-            val map_4 = HashMap<ResultType, String>()  // 数据长度
-            val map_5 = HashMap<ResultType, String>()  // 数据内容
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "文件编号")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "操作模式")
+            val map_3 = hashMapOf<ResultType, String>(ResultType.Meaning to "偏移地址")
+            val map_4 = hashMapOf<ResultType, String>(ResultType.Meaning to "数据长度")
+            val map_5 = hashMapOf<ResultType, String>(ResultType.Meaning to "数据内容")
 
             val data_1_byteLength = 2
             val data_2_byteLength = 1
@@ -734,25 +884,21 @@ class SecurityUnitFrameDecoder {
 
             map_1.parseDecHexData(
                 data_1,
-                "文件编号",
                 data_1_byteLength
             )
 
             map_2.parsePlainHexData(
                 data_2,
-                "操作模式",
                 data_2_byteLength
             )
 
             map_3.parseDecHexData(
                 data_3,
-                "偏移地址",
                 data_3_byteLength
             )
 
             map_4.parseDecHexData(
                 data_4,
-                "数据长度",
                 data_4_byteLength
             ) { _, _, _, _, _, preDes ->
                 preDes + """
@@ -762,7 +908,6 @@ class SecurityUnitFrameDecoder {
 
             map_5.parsePlainHexData(
                 data_5,
-                "数据内容",
                 data_5_byteLength
             ) { meaning, _, _, _, _, preDes ->
                 preDes + """
@@ -785,8 +930,8 @@ class SecurityUnitFrameDecoder {
         }
 
         private fun parse_0006_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
-            val map_1 = HashMap<ResultType, String>()    // ESAM 类型
-            val map_2 = HashMap<ResultType, String>()    // 发行数据内容
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "ESAM 类型")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "发行数据内容")
 
             val data_1_byteLength = 1
             //val data_2_byteLength = dataDomainByteLength - 1
@@ -796,15 +941,15 @@ class SecurityUnitFrameDecoder {
             val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
             val data_2 = frame.substring(data_2_offset, dataDomainCharEndIndex)
 
-            val (data_2_1, data_2_2) = parse_2_N_Data(data_2)
+            val (data_2_1, data_2_2) = data_2.parse_2_N_HexData()
 
             map_1.parsePlainHexData(
                 data_1,
-                "ESAM 类型：" + parseEsamType(data_2_1),
-                data_1_byteLength
+                data_1_byteLength,
+                "ESAM 类型：" + parseEsamType(data_2_1)
             ) { _, _, byteCountDes, dataFormatDes, meaningDetailsDes, _ ->
                 """
-                    |数据名称：ESAM 类型
+                    |${DATA_NAME}ESAM 类型
                     |$byteCountDes
                     |$dataFormatDes
                     |$meaningDetailsDes
@@ -813,21 +958,24 @@ class SecurityUnitFrameDecoder {
                 """.trimMargin()
             }
 
-            map_2[ResultType.Origin] = """
-                $data_2_1
-                $data_2_2
-            """.trimIndent()
-            map_2[ResultType.Analyzed] = """
-                发行数据内容长度：${data_2_1.parseHexAsDecInt()}
-                发行数据内容：$data_2_2
-            """.trimIndent()
-            map_2[ResultType.Meaning] = "发行数据内容"
-            map_2[ResultType.MeaningDetails] = """
-                数据名称：${map_2[ResultType.Meaning]}
-                字节数：2 + N
-                数据格式：HEX
-                意义：发行数据内容
-            """.trimIndent()
+            map_2 += hashMapOf(
+                ResultType.Origin to """
+                    $data_2_1
+                    $data_2_2
+                """.trimIndent(),
+                ResultType.Analyzed to """
+                    发行数据内容长度：${data_2_1.parseHexAsDecInt()}
+                    发行数据内容：
+                    $data_2_2
+                """.trimIndent(),
+                ResultType.MeaningDetails to """
+                    $DATA_NAME${map_2[ResultType.Meaning]}
+                    ${DATA_COUNT}2 + N
+                    $DATA_FORMAT_HEX
+                    $DATA_MEANING_DETAILS
+                    ${map_2[ResultType.Meaning]}
+                """.trimIndent()
+            )
 
             resultList.addResults(
                 map_1,
@@ -836,8 +984,8 @@ class SecurityUnitFrameDecoder {
         }
 
         private fun parse_0005_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
-            val map_1 = HashMap<ResultType, String>()    // 解锁数据
-            //val data_1_byteLength=28
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "解锁数据")
+            val data_1_byteLength = 28
             val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
 
             val data_1_1_byteLength = 8
@@ -854,39 +1002,40 @@ class SecurityUnitFrameDecoder {
             val data_1_3 = data_1.substring(data_1_3_offset, data_1_4_offset)  // 最大密码尝试次数
             val data_1_4 = data_1.substring(data_1_4_offset)  // 剩余密码尝试次数
 
-            map_1[ResultType.Origin] = """
-                ${data_1_1.toZeroPrefixHexString(data_1_1_byteLength)}
-                ${data_1_2.toZeroPrefixHexString(data_1_2_byteLength)}
-                ${data_1_3.toZeroPrefixHexString(data_1_3_byteLength)}
-                ${data_1_4.toZeroPrefixHexString(data_1_4_byteLength)}
-            """.trimIndent()
-            map_1[ResultType.Analyzed] = """
-                认证数据：${data_1_1.toZeroPrefixHexString(data_1_1_byteLength)}
-                密码密文：${data_1_2.toZeroPrefixHexString(data_1_2_byteLength)}
-                最大密码尝试次数：${data_1_3.toZeroPrefixHexString(data_1_3_byteLength)}
-                剩余密码尝试次数：${data_1_4.toZeroPrefixHexString(data_1_4_byteLength)}
-            """.trimIndent()
-            map_1[ResultType.Meaning] = "解锁数据"
-            map_1[ResultType.MeaningDetails] = """
-                |数据名称：${map_1[ResultType.Meaning]}
-                |字节数：28
-                |数据格式：HEX
-                |意义：
-                |   认证数据（8B）
-                |   密码密文（16B）
-                |   最大密码尝试次数（2B）
-                |   剩余密码尝试次数（2B）
-            """.trimMargin()
+            map_1 += hashMapOf(
+                ResultType.Origin to """
+                    ${data_1_1.toZeroPrefixHexString(data_1_1_byteLength)}
+                    ${data_1_2.toZeroPrefixHexString(data_1_2_byteLength)}
+                    ${data_1_3.toZeroPrefixHexString(data_1_3_byteLength)}
+                    ${data_1_4.toZeroPrefixHexString(data_1_4_byteLength)}
+                """.trimIndent(),
+                ResultType.Analyzed to """
+                    认证数据：${data_1_1.toZeroPrefixHexString(data_1_1_byteLength)}
+                    密码密文：${data_1_2.toZeroPrefixHexString(data_1_2_byteLength)}
+                    最大密码尝试次数：${data_1_3.toZeroPrefixHexString(data_1_3_byteLength)}
+                    剩余密码尝试次数：${data_1_4.toZeroPrefixHexString(data_1_4_byteLength)}
+                """.trimIndent(),
+                ResultType.MeaningDetails to """
+                    |$DATA_NAME${map_1[ResultType.Meaning]}
+                    |${DATA_COUNT}$data_1_byteLength
+                    |$DATA_FORMAT_HEX
+                    |$DATA_MEANING_DETAILS
+                    |   认证数据（8B）
+                    |   密码密文（16B）
+                    |   最大密码尝试次数（2B）
+                    |   剩余密码尝试次数（2B）
+                """.trimMargin()
+            )
+
             resultList.add(map_1)
         }
 
         private fun parse_0004_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
-            val map_1 = HashMap<ResultType, String>()    // 认证数据
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "认证数据")
             val data_1_byteLength = 8
             val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
             map_1.parsePlainHexData(
                 data_1,
-                "认证数据",
                 data_1_byteLength
             ) { _, _, _, _, _, preDes -> preDes }
             resultList.add(map_1)
@@ -896,8 +1045,8 @@ class SecurityUnitFrameDecoder {
             /*
             关于操作员密码的编码处理方式请看 parse_0002_DataDomain 方法
              */
-            val map_1 = HashMap<ResultType, String>()    // 旧操作员密码
-            val map_2 = HashMap<ResultType, String>()       // 新操作员密码
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "旧操作员密码")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "新操作员密码")
 
             val data_1_byteLength = 3
             val data_2_byteLength = 3
@@ -909,9 +1058,8 @@ class SecurityUnitFrameDecoder {
 
             map_1.parsePlainHexData(
                 data_1,
-                "旧操作员密码",
                 data_1_byteLength,
-                "BCD （8421）"
+                dataFormat = "BCD （8421）"
             ) { _, _, _, _, _, preDes ->
                 preDes + """
                     包含 0-9 数字
@@ -920,9 +1068,8 @@ class SecurityUnitFrameDecoder {
 
             map_2.parsePlainHexData(
                 data_2,
-                "新操作员密码",
                 data_2_byteLength,
-                "BCD （8421）"
+                dataFormat = "BCD （8421）"
             ) { _, _, _, _, _, preDes ->
                 preDes + """
                     包含 0-9 数字
@@ -968,14 +1115,13 @@ class SecurityUnitFrameDecoder {
                 哪些字节是 ASCII 编码，哪些字节是 BCD 编码，所以目前默认密码字节全是 BCD 编码，不支持
                 解析 ASCII 编码的字符。
              */
-            val map_1 = HashMap<ResultType, String>() // 操作员密码
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "操作员密码")
             val data_1_byteLength = 3
             val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
             map_1.parsePlainHexData(
                 data_1,
-                "操作员密码",
                 data_1_byteLength,
-                "BCD （8421）"
+                dataFormat = "BCD （8421）"
             ) { _, _, _, _, _, preDes ->
                 preDes + """
                     包含 0-9 数字
@@ -1003,8 +1149,8 @@ class SecurityUnitFrameDecoder {
          */
         private fun HashMap<ResultType, String>.parseDateHexData(
             data: String,
-            meaning: String,
             byteCount: Int,
+            meaning: String = this[ResultType.Meaning]!!,
             dataFormat: String = "HEX",
             descriptionBlock: (
                 meaning: String,
@@ -1017,8 +1163,8 @@ class SecurityUnitFrameDecoder {
         ) {
             this.parseData(
                 data,
-                meaning,
                 byteCount,
+                meaning,
                 dataFormat,
                 ParseType.DateType,
                 descriptionBlock
@@ -1038,8 +1184,8 @@ class SecurityUnitFrameDecoder {
          */
         private fun HashMap<ResultType, String>.parseDecHexData(
             data: String,
-            meaning: String,
             byteCount: Int,
+            meaning: String = this[ResultType.Meaning]!!,
             dataFormat: String = "HEX",
             descriptionBlock: (
                 meaning: String,
@@ -1052,8 +1198,8 @@ class SecurityUnitFrameDecoder {
         ) {
             this.parseData(
                 data,
-                meaning,
                 byteCount,
+                meaning,
                 dataFormat,
                 ParseType.DecType,
                 descriptionBlock
@@ -1073,8 +1219,8 @@ class SecurityUnitFrameDecoder {
          */
         private fun HashMap<ResultType, String>.parsePlainHexData(
             data: String,
-            meaning: String,
             byteCount: Int,
+            meaning: String = this[ResultType.Meaning]!!,
             dataFormat: String = "HEX",
             descriptionBlock: (
                 meaning: String,
@@ -1087,8 +1233,8 @@ class SecurityUnitFrameDecoder {
         ) {
             this.parseData(
                 data,
-                meaning,
                 byteCount,
+                meaning,
                 dataFormat,
                 ParseType.HexType,
                 descriptionBlock
@@ -1112,10 +1258,16 @@ class SecurityUnitFrameDecoder {
             object DateType : ParseType()
         }
 
+        private const val DATA_NAME = "数据名称："
+        private const val DATA_COUNT = "字节数："
+        private const val DATA_FORMAT = "数据格式："
+        private const val DATA_FORMAT_HEX = "数据格式：HEX"
+        private const val DATA_MEANING_DETAILS = "意义："
+
         private fun HashMap<ResultType, String>.parseData(
             data: String,
-            meaning: String,
             byteCount: Int,
+            meaning: String = this[ResultType.Meaning]!!,
             dataFormat: String = "HEX",
             parseType: ParseType,
             descriptionBlock: (
@@ -1135,10 +1287,10 @@ class SecurityUnitFrameDecoder {
                 ParseType.DateType -> data.parseHexAsDateString()
             }
             this[ResultType.Meaning] = meaning
-            val dataMeaningDes = "数据名称：${this[ResultType.Meaning]}"
-            val byteCountDes = "字节数：$byteCount"
-            val dataFormatDes = "数据格式：$dataFormat"
-            val meaningDetailsDes = "意义:"
+            val dataMeaningDes = "$DATA_NAME$${this[ResultType.Meaning]}"
+            val byteCountDes = "$DATA_COUNT$byteCount"
+            val dataFormatDes = "$DATA_FORMAT$dataFormat"
+            val meaningDetailsDes = DATA_MEANING_DETAILS
             val preDes = """
                 $dataMeaningDes
                 $byteCountDes
@@ -1165,17 +1317,17 @@ class SecurityUnitFrameDecoder {
         }
 
         /**
-         * 拆分 2 + N 结构的字节字符串数据，前两个字节是大字节序的长度信息，余下的是数据内容
+         * 拆分 2 + N 结构的字节字符串数据，前两个字节是大字节序的长度信息，余下的是数据内容。拆分的字节已经过添加 0 前缀处理
          */
-        private fun parse_2_N_Data(data: String): DataOf2N {
+        private fun String.parse_2_N_HexData(): DataOf2N {
             val data_1_byteLength = 2
             var data_2_byteLength by Delegates.notNull<Int>()
 
             val data_2_offset = data_1_byteLength * 2
 
-            val data_1 = data.substring(0, data_2_offset)
+            val data_1 = this.substring(0, data_2_offset)
             data_2_byteLength = data_1.parseHexAsDecInt()
-            val data_2 = data.substring(data_2_offset, data_2_byteLength)
+            val data_2 = this.substring(data_2_offset, data_2_byteLength)
 
             return DataOf2N(
                 byteLength = data_1.toZeroPrefixHexString(data_1_byteLength),
@@ -1805,6 +1957,16 @@ class SecurityUnitFrameDecoder {
                 }
                 else -> "未知主功能标识"
             }
+
+        /**
+         * 将当前 16 进制字符串转换为 UTF-8 编码的字符串
+         */
+        @ExperimentalUnsignedTypes
+        private fun String.parseHexAsUTF8String(): String {
+            val byteList = mutableListOf<Byte>()
+            for (i in this.indices step 2) byteList.add(this.substring(i, i + 2).toUByte(16).toByte())
+            return String(byteList.toByteArray(), Charset.forName("UTF-8"))
+        }
 
         /**
          * 将当前 16 进制字符串转换为 10 进制 Int 类型数据
