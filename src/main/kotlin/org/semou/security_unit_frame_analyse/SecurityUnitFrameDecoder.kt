@@ -1,5 +1,7 @@
 @file:Suppress("LocalVariableName")
 
+package org.semou.security_unit_frame_analyse
+
 import java.nio.charset.Charset
 import java.util.*
 import kotlin.properties.Delegates
@@ -26,7 +28,7 @@ class SecurityUnitFrameDecoder {
         ): SecurityUnitFrameDecodeResultCode {
             val decodeState: SecurityUnitFrameDecodeResultCode
             //字符串预处理----对数据域之外的部分去除空格、换行、转换为大写
-            val pretreatmentFrame = frame.replace(Regex("[\\s\\n\\r]"), "").toUpperCase()
+            val pretreatmentFrame = frame.replace(Regex("[\\s\\n\\r]"), "").uppercase(Locale.getDefault())
             //安全单元帧字节完整性检测
             if (!frameByteIntegrityCheck(pretreatmentFrame)) return SecurityUnitFrameDecodeResultCode.FRAME_BYTE_INCOMPLETE
             //安全单元帧格式完整性检测
@@ -48,7 +50,7 @@ class SecurityUnitFrameDecoder {
         /**
          * 指示当前帧是否是 F=0xFE,C=0x03 的返回帧，如果是，则当前帧不包含 A。true 表示当前帧为返回帧，false 反之
          */
-        private var isFE03Acknowledgement by Delegates.notNull<Boolean>()
+        private var isFE03Acknowledgement = false
 
         /**
          * 安全单元帧格式完整性检测
@@ -295,7 +297,6 @@ class SecurityUnitFrameDecoder {
             }
             when (F_C_or_A) {
                 //todo 待完成数据域解析
-                // 安全单元自身操作命令
                 // 注释的方法皆无数据域
 //                0x0001 -> parse_0001_DataDomain(frame,resultList)
                 0x0002 -> parse_0002_DataDomain(frame, resultList)
@@ -368,7 +369,7 @@ class SecurityUnitFrameDecoder {
                 0x028D -> parse_028D_DataDomain(frame, resultList)
 //                0x028E->parse_028E_DataDomain(frame,resultList)
 //                // 现场服务终端与安全隔离网关交互类命令
-//                0x0301->parse_0301_DataDomain(frame,resultList)
+                0x0301 -> parse_0301_DataDomain(frame, resultList)
 //                0x0302->parse_0302_DataDomain(frame,resultList)
 //                0x0303->parse_0303_DataDomain(frame,resultList)
 //                0x0304->parse_0304_DataDomain(frame,resultList)
@@ -430,6 +431,10 @@ class SecurityUnitFrameDecoder {
 //                0xFE82->parse_FE82_DataDomain(frame,resultList)
 //                0xFE84->parse_FE84_DataDomain(frame,resultList)
             }
+        }
+
+        private fun parse_0301_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            // todo 写到这了
         }
 
         private fun parse_028D_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
@@ -620,17 +625,17 @@ class SecurityUnitFrameDecoder {
             }
 
 //            map_1 += hashMapOf(
-//                ResultType.Origin to """
+//                org.semou.SecurityUnitFrameAnalyse.ResultType.Origin to """
 //                    $data_1_1
 //                    $data_1_2
 //                """.trimIndent(),
-//                ResultType.Analyzed to """
+//                org.semou.SecurityUnitFrameAnalyse.ResultType.Analyzed to """
 //                    密钥数据块长度：${data_1_1.parseHexAsDecInt()}
 //                    密钥 1 ... 密钥 N：
 //                    $data_1_2
 //                """.trimIndent(),
-//                ResultType.MeaningDetails to """
-//                    $DATA_NAME${map_1[ResultType.Meaning]}
+//                org.semou.SecurityUnitFrameAnalyse.ResultType.MeaningDetails to """
+//                    $DATA_NAME${map_1[org.semou.SecurityUnitFrameAnalyse.ResultType.Meaning]}
 //                    ${DATA_COUNT}2 + N
 //                    $DATA_FORMAT_HEX
 //                    $DATA_MEANING_DETAILS
@@ -2818,7 +2823,7 @@ class SecurityUnitFrameDecoder {
                 """.trimIndent(),
                 ResultType.MeaningDetails to """
                     :$DATA_NAME${map_1[ResultType.Meaning]}
-                    :${DATA_COUNT}$data_1_byteLength
+                    :$DATA_COUNT$data_1_byteLength
                     :$DATA_FORMAT_HEX
                     :$DATA_MEANING_DETAILS
                     :
@@ -2845,7 +2850,7 @@ class SecurityUnitFrameDecoder {
                 """.trimIndent(),
                 ResultType.MeaningDetails to """
                     $DATA_NAME${map_2[ResultType.Meaning]}
-                    ${DATA_COUNT}$data_2_byteLength
+                    $DATA_COUNT$data_2_byteLength
                     $DATA_FORMAT_HEX
                     $DATA_MEANING_DETAILS
                     第一个字节是 boot 程序版本号
@@ -2863,7 +2868,7 @@ class SecurityUnitFrameDecoder {
                 """.trimIndent(),
                 ResultType.MeaningDetails to """
                     $DATA_NAME${map_3[ResultType.Meaning]}
-                    ${DATA_COUNT}$data_3_byteLength
+                    $DATA_COUNT$data_3_byteLength
                     $DATA_FORMAT_HEX
                     $DATA_MEANING_DETAILS
                     第一个字节是安全单元改版编号
@@ -3299,7 +3304,7 @@ class SecurityUnitFrameDecoder {
                 """.trimIndent(),
                 ResultType.MeaningDetails to """
                     |$DATA_NAME${map_1[ResultType.Meaning]}
-                    |${DATA_COUNT}$data_1_byteLength
+                    |$DATA_COUNT$data_1_byteLength
                     |$DATA_FORMAT_HEX
                     |$DATA_MEANING_DETAILS
                     |   认证数据（8B）
@@ -3693,7 +3698,6 @@ class SecurityUnitFrameDecoder {
             var data_2_byteLength by Delegates.notNull<Int>()
 
             val data_2_offset = data_1_byteLength * 2
-            // todo 从帧里解析出的长度和实际数据长度，取短的那个
             val data_1 = this.substring(0, data_2_offset)
             val byteLengthFromFrame = data_1.parseHexAsDecInt()
             val realByteLength = this.length / 2 - data_1_byteLength
@@ -4300,8 +4304,8 @@ class SecurityUnitFrameDecoder {
                 when {
                     //安全单元升级命令的特殊情况，0x02 和 0x03 由安全单元发起
                     F == 0xFE && (this and 0x7F) == 0x02 ||
-                            F == 0xFE && (this and 0x7F) == 0x03 -> "命令类型：${meaning};\n传输方向: 安全单元 ---> 现场服务终端"
-                    else -> "命令类型：${meaning};\n传输方向: 现场服务终端 ---> 安全单元"
+                            F == 0xFE && (this and 0x7F) == 0x03 -> "命令类型：${meaning}\n传输方向: 安全单元 ---> 现场服务终端"
+                    else -> "命令类型：${meaning}\n传输方向: 现场服务终端 ---> 安全单元"
                 }
             else
                 when {
