@@ -18,6 +18,8 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    testImplementation(kotlin("test"))
+    implementation("org.junit.jupiter:junit-jupiter:5.4.2")
 }
 
 tasks.withType<KotlinCompile> {
@@ -32,4 +34,8 @@ compose.desktop {
             packageName = "SecurityUnitFrameAnalyse"
         }
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
