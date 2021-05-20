@@ -350,22 +350,22 @@ class SecurityUnitFrameDecoder {
                 0x0209 -> parse_0209_DataDomain(frame, resultList)
                 0x020A -> parse_020A_DataDomain(frame, resultList)
                 0x020B -> parse_020B_DataDomain(frame, resultList)
-//                0x020C->parse_020C_DataDomain(frame,resultList)
-//                0x020D->parse_020D_DataDomain(frame,resultList)
-//                0x020E->parse_020E_DataDomain(frame,resultList)
-//                0x0281->parse_0281_DataDomain(frame,resultList)
-//                0x0282->parse_0282_DataDomain(frame,resultList)
-//                0x0283->parse_0283_DataDomain(frame,resultList)
-//                0x0284->parse_0284_DataDomain(frame,resultList)
-//                0x0285->parse_0285_DataDomain(frame,resultList)
-//                0x0286->parse_0286_DataDomain(frame,resultList)
-//                0x0287->parse_0287_DataDomain(frame,resultList)
-//                0x0288->parse_0288_DataDomain(frame,resultList)
-//                0x0289->parse_0289_DataDomain(frame,resultList)
+                0x020C -> parse_020C_DataDomain(frame, resultList)
+                0x020D -> parse_020D_DataDomain(frame, resultList)
+                0x020E -> parse_020E_DataDomain(frame, resultList)
+                0x0281 -> parse_0281_DataDomain(frame, resultList)
+                0x0282 -> parse_0282_DataDomain(frame, resultList)
+                0x0283 -> parse_0283_DataDomain(frame, resultList)
+                0x0284 -> parse_0284_DataDomain(frame, resultList)
+                0x0285 -> parse_0285_DataDomain(frame, resultList)
+                0x0286 -> parse_0286_DataDomain(frame, resultList)
+                0x0287 -> parse_0287_DataDomain(frame, resultList)
+                0x0288 -> parse_0288_DataDomain(frame, resultList)
+                0x0289 -> parse_0289_DataDomain(frame, resultList)
 //                0x028A->parse_028A_DataDomain(frame,resultList)
-//                0x028B->parse_028B_DataDomain(frame,resultList)
-//                0x028C->parse_028C_DataDomain(frame,resultList)
-//                0x028D->parse_028D_DataDomain(frame,resultList)
+                0x028B -> parse_028B_DataDomain(frame, resultList)
+                0x028C -> parse_028C_DataDomain(frame, resultList)
+                0x028D -> parse_028D_DataDomain(frame, resultList)
 //                0x028E->parse_028E_DataDomain(frame,resultList)
 //                // 现场服务终端与安全隔离网关交互类命令
 //                0x0301->parse_0301_DataDomain(frame,resultList)
@@ -432,8 +432,670 @@ class SecurityUnitFrameDecoder {
             }
         }
 
-        private fun parse_020B_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+        private fun parse_028D_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            // 028D 和 028C 解析方式相同
+            parse_028C_DataDomain(frame, resultList)
+        }
 
+        private fun parse_028C_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "应用层数据明文长度")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "应用层数据明文")
+
+            val data_1_byteLength = 2
+            val data_2_byteLength = dataDomainByteLength - data_1_byteLength
+
+            val (data_1, data_2) =
+                frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+                    .parse_2_N_HexData()
+
+            map_1.parseDecHexData(
+                data_1,
+                data_1_byteLength
+            )
+
+            map_2.parsePlainHexData(
+                data_2,
+                data_2_byteLength
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2
+            )
+        }
+
+        private fun parse_028B_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "应用层数据长度")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "应用层数据")
+
+            val data_1_byteLength = 2
+            val data_2_byteLength = dataDomainByteLength - data_1_byteLength
+
+            val (data_1, data_2) =
+                frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+                    .parse_2_N_HexData()
+
+            map_1.parseDecHexData(
+                data_1,
+                data_1_byteLength
+            )
+
+            map_2.parsePlainHexData(
+                data_2,
+                data_2_byteLength
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2
+            )
+        }
+
+
+        private fun parse_0289_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "会话数据")
+
+            val data_1_byteLength = 36
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+
+            val data_1_1_byteLength = 32
+            //val data_1_2_byteLength=4
+
+            val data_1_2_offset = 0 + data_1_1_byteLength * 2
+
+            val data_1_1 = data_1.substring(0, data_1_2_offset)
+            val data_1_2 = data_1.substring(data_1_2_offset)
+
+            map_1.append(
+                data_1_byteLength,
+                origin {
+                    """
+                        $data_1_1
+                        $data_1_2
+                    """
+                },
+                analyzed {
+                    """
+                        $data_1_1
+                        $data_1_2
+                    """
+                }
+            )
+
+            resultList.add(map_1)
+        }
+
+        private fun parse_0288_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "充值金额")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "购电次数")
+            val map_3 = hashMapOf<ResultType, String>(ResultType.Meaning to "MAC")
+            val map_4 = hashMapOf<ResultType, String>(ResultType.Meaning to "客户编号")
+            val map_5 = hashMapOf<ResultType, String>(ResultType.Meaning to "MAC")
+
+            val data_1_byteLength = 4
+            val data_2_byteLength = 4
+            val data_3_byteLength = 4
+            val data_4_byteLength = 6
+            val data_5_byteLength = 4
+
+            val data_2_offset = dataDomainCharStartIndex + data_1_byteLength * 2
+            val data_3_offset = data_2_offset + data_2_byteLength * 2
+            val data_4_offset = data_3_offset + data_3_byteLength * 2
+            val data_5_offset = data_4_offset + data_4_byteLength * 2
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
+            val data_2 = frame.substring(data_2_offset, data_3_offset)
+            val data_3 = frame.substring(data_3_offset, data_4_offset)
+            val data_4 = frame.substring(data_4_offset, data_5_offset)
+            val data_5 = frame.substring(data_5_offset, dataDomainCharEndIndex)
+
+            map_1.parsePlainHexData(
+                data_1,
+                data_1_byteLength
+            )
+
+            map_2.parsePlainHexData(
+                data_2,
+                data_2_byteLength
+            )
+
+            map_3.parsePlainHexData(
+                data_3,
+                data_3_byteLength
+            )
+
+            map_4.parsePlainHexData(
+                data_4,
+                data_4_byteLength
+            )
+
+            map_5.parsePlainHexData(
+                data_5,
+                data_5_byteLength
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2,
+                map_3,
+                map_4,
+                map_5
+            )
+        }
+
+        private fun parse_0287_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "密钥数据块")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "MAC")
+
+            val data_1_byteLength = dataDomainByteLength - 4
+            val data_2_byteLength = 4
+
+            val data_2_offset = dataDomainCharStartIndex + data_1_byteLength * 2
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
+            val data_2 = frame.substring(data_2_offset, dataDomainCharEndIndex)
+
+            val (data_1_1, data_1_2) = data_1.parse_2_N_HexData()
+
+            map_1.append(
+                data_1_byteLength,
+                ResultType.Origin to """
+                    $data_1_1
+                    $data_1_2
+                """.trimIndent(),
+                ResultType.Analyzed to """
+                    密钥数据块长度：${data_1_1.parseHexAsDecInt()}
+                    密钥 1 ... 密钥 N：
+                    $data_1_2
+                """.trimIndent(),
+            ) { _, dataMeaningDes, _, dataFormatDes, meaningDetailsDes, _ ->
+                """
+                    $dataMeaningDes
+                    ${DATA_COUNT}2 + N
+                    $dataFormatDes
+                    $meaningDetailsDes
+                    数据长度（2B）+ 密钥1 ... 密钥 N
+                """.trimIndent()
+            }
+
+//            map_1 += hashMapOf(
+//                ResultType.Origin to """
+//                    $data_1_1
+//                    $data_1_2
+//                """.trimIndent(),
+//                ResultType.Analyzed to """
+//                    密钥数据块长度：${data_1_1.parseHexAsDecInt()}
+//                    密钥 1 ... 密钥 N：
+//                    $data_1_2
+//                """.trimIndent(),
+//                ResultType.MeaningDetails to """
+//                    $DATA_NAME${map_1[ResultType.Meaning]}
+//                    ${DATA_COUNT}2 + N
+//                    $DATA_FORMAT_HEX
+//                    $DATA_MEANING_DETAILS
+//                    数据长度（2B）+ 密钥1 ... 密钥 N
+//                """.trimIndent()
+//            )
+
+            map_2.parsePlainHexData(
+                data_2,
+                data_2_byteLength
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2
+            )
+        }
+
+        private fun parse_0286_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "数据长度")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "校时数据密文")
+
+            val data_1_byteLength = 2
+            val data_2_byteLength = 32 * 6 + 48
+
+            val (data_1, data_2) = frame.parse_2_N_HexData()
+
+            map_1.parseDecHexData(
+                data_1,
+                data_1_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    数据长度
+                """.trimIndent()
+            }
+
+            val data_2_1 = data_2.substring(0, data_2.length - 96)
+            val data_2_2 = data_2.substring(data_2.length - 96)
+            val meterKeyCharLength = 64
+            val data_2_1_origin = StringBuffer()
+            val data_2_1_analyzed = StringBuffer()
+            var key: String
+            var keyNum = 1
+            for (i in data_2_1.indices step meterKeyCharLength) {
+                key = data_2_1.substring(i, i + meterKeyCharLength) + "\n|"
+                data_2_1_origin.append(key)
+                data_2_1_analyzed.append("密钥 ${keyNum}：$key")
+                keyNum++
+            }
+            map_2 += hashMapOf(
+                ResultType.Origin to """
+                    |$data_2_1_origin
+                    |$data_2_2
+                """.trimMargin(),
+                ResultType.Analyzed to """
+                    |$data_2_1_analyzed
+                    |$data_2_2
+                """.trimMargin(),
+                ResultType.MeaningDetails to """
+                    $DATA_NAME${map_2[ResultType.MeaningDetails]}
+                    ${DATA_COUNT}32 * 6 + 48  (240)
+                    $DATA_FORMAT_HEX
+                    $DATA_MEANING_DETAILS
+                    
+                """.trimIndent()
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2
+            )
+        }
+
+        private fun parse_0285_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "数据长度")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "校时数据密文")
+            val map_3 = hashMapOf<ResultType, String>(ResultType.Meaning to "MAC")
+
+            val data_1_byteLength = 2
+            val data_3_byteLength = 4
+            val data_2_byteLength = dataDomainByteLength - (data_1_byteLength + data_3_byteLength)
+
+            val (data_1, data_2) = frame.parse_2_N_HexData()
+            val data_3 = frame.substring(dataDomainCharEndIndex - 8)
+
+            map_1.parseDecHexData(
+                data_1,
+                data_1_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    注：包含 MAC 长度
+                """.trimIndent()
+            }
+
+            map_2.parsePlainHexData(
+                data_2,
+                data_2_byteLength
+            )
+
+            map_3.parsePlainHexData(
+                data_3,
+                data_3_byteLength
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2,
+                map_3
+            )
+        }
+
+        private fun parse_0284_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "数据长度")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "参数明文或密文")
+            val map_3 = hashMapOf<ResultType, String>(ResultType.Meaning to "MAC")
+
+            val data_1_byteLength = 2
+            val data_3_byteLength = 4
+            val data_2_byteLength = dataDomainByteLength - (data_1_byteLength + data_3_byteLength)
+
+            val (data_1, data_2) = frame.parse_2_N_HexData()
+            val data_3 = frame.substring(dataDomainCharEndIndex - 8)
+
+            map_1.parseDecHexData(
+                data_1,
+                data_1_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    注：包含 MAC 长度
+                """.trimIndent()
+            }
+
+            map_2.parsePlainHexData(
+                data_2,
+                data_2_byteLength
+            )
+
+            map_3.parsePlainHexData(
+                data_3,
+                data_3_byteLength
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2,
+                map_3
+            )
+        }
+
+        private fun parse_0283_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "控制数据密文")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "MAC")
+
+            val data_1_byteLength = 16
+            val data_2_byteLength = 4
+
+            val data_2_offset = dataDomainCharStartIndex + data_1_byteLength * 2
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
+            val data_2 = frame.substring(data_2_offset, dataDomainCharEndIndex)
+
+            map_1.parsePlainHexData(
+                data_1,
+                data_1_byteLength
+            )
+
+            map_2.parsePlainHexData(
+                data_2,
+                data_2_byteLength
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2
+            )
+        }
+
+        private fun parse_0282_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "身份认证密文")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "随机数 1")
+
+            val data_1_byteLength = 8
+            val data_2_byteLength = 8
+
+            val data_2_offset = dataDomainCharStartIndex + data_1_byteLength * 2
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
+            val data_2 = frame.substring(data_2_offset, dataDomainCharEndIndex)
+
+            map_1.parsePlainHexData(
+                data_1,
+                data_1_byteLength
+            )
+
+            map_2.parsePlainHexData(
+                data_2,
+                data_2_byteLength
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2
+            )
+        }
+
+        private fun parse_0281_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "随机数 2 密文")
+
+            val data_1_byteLength = 8
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+
+            map_1.parsePlainHexData(
+                data_1,
+                data_1_byteLength
+            )
+
+            resultList.addResults(map_1)
+        }
+
+        private fun parse_020E_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "表号/ESAM 序列号")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "OAD")
+            val map_3 = hashMapOf<ResultType, String>(ResultType.Meaning to "应用层数据长度")
+            val map_4 = hashMapOf<ResultType, String>(ResultType.Meaning to "应用层数据")
+
+            val data_1_byteLength = 8
+            val data_2_byteLength = 4
+            val data_3_byteLength = 2
+            val data_4_byteLength = dataDomainByteLength - (data_1_byteLength + data_2_byteLength + data_3_byteLength)
+
+            val data_2_offset = dataDomainCharStartIndex + data_1_byteLength * 2
+            val data_3_offset = data_2_offset + data_2_byteLength * 2
+            val data_4_offset = data_3_offset + data_3_byteLength * 2
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
+            val data_2 = frame.substring(data_2_offset, data_3_offset)
+            val data_3 = frame.substring(data_3_offset, data_3_offset)
+            val data_4 = frame.substring(data_4_offset, dataDomainCharEndIndex)
+
+            map_1.parsePlainHexData(
+                data_1,
+                data_1_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    高位在前（非颠倒），高 2 字节补 0x00；
+                    公钥状态下当前值为 ESAM 序列号，私钥状态下为表号
+                """.trimIndent()
+            }
+
+            map_2.parsePlainHexData(
+                data_2,
+                data_2_byteLength
+            )
+
+            map_3.parseDecHexData(
+                data_3,
+                data_3_byteLength
+            )
+
+            map_4.parsePlainHexData(
+                data_4,
+                data_4_byteLength
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2,
+                map_3,
+                map_4
+            )
+        }
+
+        private fun parse_020D_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "分散因子")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "应用层数据明文长度")
+            val map_3 = hashMapOf<ResultType, String>(ResultType.Meaning to "应用层数据明文")
+
+            val data_1_byteLength = 8
+            val data_2_byteLength = 2
+            val data_3_byteLength = dataDomainByteLength - (data_1_byteLength + data_2_byteLength)
+
+            val data_2_offset = dataDomainCharStartIndex + data_1_byteLength * 2
+            val data_3_offset = data_2_offset + data_2_byteLength * 2
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
+            val data_2 = frame.substring(data_2_offset, data_3_offset)
+            val data_3 = frame.substring(data_3_offset, dataDomainCharEndIndex)
+
+            map_1.parsePlainHexData(
+                data_1,
+                data_1_byteLength
+            )
+
+            map_2.parseDecHexData(
+                data_2,
+                data_2_byteLength
+            )
+
+            map_3.parsePlainHexData(
+                data_3,
+                data_3_byteLength
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2,
+                map_3
+            )
+        }
+
+        private fun parse_020C_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "链路用户数据长度")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "链路用户数据")
+
+            val data_1_byteLength = 2
+
+            val (data_1, data_2) = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex).parse_2_N_HexData()
+
+            map_1.parseDecHexData(
+                data_1,
+                data_1_byteLength
+            )
+
+            val data_2_1_byteLength = 1
+            val data_2_2_byteLength = 1
+            val data_2_3_byteLength = 2
+            val data_2_5_byteLength = 1
+            val data_2_6_byteLength = 1
+            val data_2_7_byteLength = 4
+            val data_2_4_byteLength =
+                dataDomainByteLength - (data_1_byteLength + data_2_1_byteLength + data_2_2_byteLength +
+                        data_2_3_byteLength + data_2_5_byteLength + data_2_6_byteLength + data_2_7_byteLength)
+
+            val data_2_2_offset = 0 + data_2_1_byteLength * 2
+            val data_2_3_offset = data_2_2_offset + data_2_2_byteLength * 2
+            val data_2_4_offset = data_2_3_offset + data_2_3_byteLength * 2
+            val data_2_5_offset = data_2_4_offset + data_2_4_byteLength * 2
+            val data_2_6_offset = data_2_5_offset + data_2_5_byteLength * 2
+            val data_2_7_offset = data_2_6_offset + data_2_6_byteLength * 2
+
+            val data_2_1 = data_2.substring(0, data_2_2_offset)
+            val data_2_2 = data_2.substring(data_2_2_offset, data_2_3_offset)
+            val data_2_3 = data_2.substring(data_2_3_offset, data_2_4_offset)
+            val data_2_4 = data_2.substring(data_2_4_offset, data_2_5_offset)
+            val data_2_5 = data_2.substring(data_2_5_offset, data_2_6_offset)
+            val data_2_6 = data_2.substring(data_2_6_offset, data_2_7_offset)
+            val data_2_7 = data_2.substring(data_2_7_offset)
+
+            map_2 += hashMapOf(
+                ResultType.Origin to """
+                    $data_2_1
+                    $data_2_2
+                    $data_2_3
+                    $data_2_4
+                    $data_2_5
+                    $data_2_6
+                    $data_2_7
+                """.trimIndent(),
+                ResultType.Analyzed to """
+                    $data_2_1
+                    数据型式：${
+                    when (data_2_2) {
+                        "00" -> "明文"
+                        "01" -> "密文"
+                        else -> "未知数据形式"
+                    }
+                }
+                    数据长度：${data_2_3.parseHexAsDecInt()}
+                    数据内容：${data_2_4}
+                    是否含数据验证消息：${
+                    when (data_2_5) {
+                        "00" -> "不含 MAC"
+                        "01" -> "含有 MAC"
+                        else -> "未知"
+                    }
+                }
+                    数据验证消息：${data_2_6}
+                    MAC：${data_2_7}
+                """.trimIndent(),
+                ResultType.MeaningDetails to """
+                    $DATA_NAME${map_2[ResultType.Meaning]}
+                    ${DATA_COUNT}N
+                    $DATA_FORMAT_HEX
+                    $DATA_MEANING_DETAILS
+                    0x90
+                    数据形式（1B）：
+                        00：明文
+                        01：密文
+                    数据长度（2B，大字节序）
+                    数据内容（N）
+                    是否含数据验证消息（1B）：
+                        00：不含 MAC
+                        01：含有 MAC
+                    数据验证消息（1B）
+                    MAC（4B）
+                """.trimIndent()
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2
+            )
+
+        }
+
+        private fun parse_020B_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "主站任务数据")
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+
+            val data_1_1_byteLength = 1
+            val data_1_2_byteLength = 1
+            val data_1_3_byteLength = 2
+            val data_1_5_byteLength = 4
+            val data_1_4_byteLength =
+                dataDomainByteLength - (data_1_1_byteLength + data_1_2_byteLength + data_1_3_byteLength + data_1_5_byteLength)
+
+            val data_1_2_offset = 0 + data_1_1_byteLength * 2
+            val data_1_3_offset = data_1_2_offset + data_1_2_byteLength * 2
+            val data_1_4_offset = data_1_3_offset + data_1_3_byteLength * 2
+            val data_1_5_offset = data_1_4_offset + data_1_4_byteLength * 2
+
+            val data_1_1 = data_1.substring(0, data_1_2_offset)
+            val data_1_2 = data_1.substring(data_1_2_offset, data_1_3_offset)
+            val data_1_3 = data_1.substring(data_1_3_offset, data_1_4_offset)
+            val data_1_4 = data_1.substring(data_1_4_offset, data_1_5_offset)
+            val data_1_5 = data_1.substring(data_1_5_offset)
+
+            map_1 += hashMapOf(
+                ResultType.Origin to """
+                    ${data_1_1.toZeroPrefixHexString(data_1_1_byteLength)}
+                    ${data_1_2.toZeroPrefixHexString(data_1_2_byteLength)}
+                    ${data_1_3.toZeroPrefixHexString(data_1_3_byteLength)}
+                    ${data_1_4.toZeroPrefixHexString(data_1_4_byteLength)}
+                    ${data_1_5.toZeroPrefixHexString(data_1_5_byteLength)}
+                """.trimIndent(),
+                ResultType.Analyzed to """
+                    安全模式字：${
+                    when (data_1_1) {
+                        "00" -> "明文"
+                        "01" -> "明文 + MAC"
+                        "03" -> "密文 + MAC"
+                        "04" -> "明文 + RN 随机数"
+                        else -> "未知安全模式字"
+                    }
+                }
+                    任务参数类型：${data_1_2.toZeroPrefixHexString(data_1_2_byteLength)}
+                    应用层数据长度：${data_1_3.parseHexAsDecInt()}
+                    应用层数据：${data_1_4.toZeroPrefixHexString(data_1_4_byteLength)}
+                    MAC：${data_1_5.toZeroPrefixHexString(data_1_5_byteLength)}
+                """.trimIndent(),
+                ResultType.MeaningDetails to """
+                    $DATA_NAME${map_1[ResultType.Meaning]}
+                    ${DATA_COUNT}N
+                    $DATA_FORMAT_HEX
+                    $DATA_MEANING_DETAILS
+                    安全模式字 （1B）
+                    任务参数类型 （1B）
+                    应用层数据长度 （2B）
+                    应用层数据 （N）
+                    MAC （4B，也称保护码）
+                """.trimIndent()
+            )
+            resultList.add(map_1)
         }
 
         private fun parse_020A_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
@@ -2754,6 +3416,91 @@ class SecurityUnitFrameDecoder {
             "01" -> "C-ESAM"
             "02" -> "Y-ESAM"
             else -> "未知类型"
+        }
+
+
+        private fun origin(
+            isTrimIndent: Boolean = true,
+            block: () -> String
+        ): Pair<ResultType, String> = ResultType.Origin to when (isTrimIndent) {
+            true -> block().trimIndent()
+            false -> block().trimMargin()
+        }
+
+        private fun analyzed(
+            isTrimIndent: Boolean = true,
+            block: () -> String
+        ): Pair<ResultType, String> = ResultType.Origin to when (isTrimIndent) {
+            true -> block().trimIndent()
+            false -> block().trimMargin()
+        }
+
+        private fun meaningDetails(
+            isTrimIndent: Boolean = true,
+            block: () -> String
+        ): Pair<ResultType, String> = ResultType.Origin to when (isTrimIndent) {
+            true -> block().trimIndent()
+            false -> block().trimMargin()
+        }
+
+        /** N 字节不确定长度 */
+        private const val UNCERTAIN_LENGTH = -1
+
+        /** 2 + N 字节不确定长度 */
+        private const val TWO_N = -2
+
+        /**
+         * 将数据项的原始的、分析后的以及详细信息添加到当前 HashMap 中
+         *
+         * @param byteCount 数据项字节长度
+         * @param pairs 数据项字段
+         * @param meaning 数据项名称或简要意义
+         * @param dataFormat 数据项数据格式，默认为 "HEX"
+         * @param descriptionBlock 填充意义详细描述，接收 dataMeaningDes（数据项描述）、byteCountDes（字节数量描述）、
+         *      dataFormatDes（数据格式描述）、meaningDetailsDes（数据项详细描述）、descriptionBlock（预处理描述模板）五个参数
+         *
+         */
+        private fun HashMap<ResultType, String>.append(
+            byteCount: Int = UNCERTAIN_LENGTH,
+            vararg pairs: Pair<ResultType, String>,
+            meaning: String = this[ResultType.Meaning]!!,
+            dataFormat: String = "HEX",
+            descriptionBlock: (
+                meaning: String,
+                dataMeaningDes: String,
+                byteCountDes: String,
+                dataFormatDes: String,
+                meaningDetailsDes: String,
+                preDes: String
+            ) -> String = { _, _, _, _, _, preDes -> preDes }
+        ) {
+            this.putAll(pairs)
+            this[ResultType.Meaning] = meaning
+            val dataMeaningDes = "$DATA_NAME$${this[ResultType.Meaning]}"
+            val byteCountDes = "$DATA_COUNT${
+                when (byteCount) {
+                    UNCERTAIN_LENGTH -> "N"
+                    TWO_N -> "2 + N"
+                    else -> byteCount
+                }
+            }"
+            val dataFormatDes = "$DATA_FORMAT$dataFormat"
+            val meaningDetailsDes = DATA_MEANING_DETAILS
+            val preDes = """
+                $dataMeaningDes
+                $byteCountDes
+                $dataFormatDes
+                $meaningDetailsDes
+                
+            """.trimIndent()
+            this[ResultType.MeaningDetails] = descriptionBlock(
+                meaning,
+                dataMeaningDes,
+                byteCountDes,
+                dataFormatDes,
+                meaningDetailsDes,
+                preDes
+            )
         }
 
         /**
