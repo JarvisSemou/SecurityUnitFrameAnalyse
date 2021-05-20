@@ -26,7 +26,7 @@ tasks.withType<KotlinCompile> {
 
 compose.desktop {
     application {
-        mainClass = "MainKt"
+        mainClass = "org.semou.security_unit_frame_analyse.MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "SecurityUnitFrameAnalyse"
