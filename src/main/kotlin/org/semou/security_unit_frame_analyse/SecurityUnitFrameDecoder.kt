@@ -1142,7 +1142,7 @@ class SecurityUnitFrameDecoder {
                 """.trimIndent()
             }
 
-            map_3.parseDecHexData(
+            map_3.parsePlainHexData(
                 data_3,
                 data_3_byteLength
             )

@@ -144,13 +144,13 @@ fun main() = Window(
                                                 Alignment.CenterVertically
                                             )
                                             .heightIn(
-                                                min = 25.dp,
-                                                max = 200.dp
+                                                min = 25.dp
                                             )
                                             .padding(start = 5.dp)
                                     ) {
                                         Text(
-                                            subframe
+                                            subframe,
+                                            modifier=Modifier.padding(start=4.dp)
                                         )
 
                                     }
@@ -161,13 +161,13 @@ fun main() = Window(
                                                 Alignment.CenterVertically
                                             )
                                             .heightIn(
-                                                min = 25.dp,
-                                                max = 200.dp
+                                                min = 25.dp
                                             )
                                             .padding(start = 5.dp)
                                     ) {
                                         Text(
-                                            meanings
+                                            meanings,
+                                            modifier=Modifier.padding(end=4.dp)
                                         )
                                     }
                                 }
