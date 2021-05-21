@@ -199,15 +199,15 @@ class SecurityUnitFrameDecoder {
             isAcknoledgement = C_or_A and 0x80 == 0x80
             if (isAcknoledgement) {
                 S = frame.substring(10, 12).parseHexAsDecInt()
-                dataDomainByteLength = frameByteLength - 6
+                dataDomainByteLength = frameByteLength - 3
                 dataDomainCharStartIndex = 12
             } else {
-                dataDomainByteLength = frameByteLength - 5
+                dataDomainByteLength = frameByteLength - 2
                 dataDomainCharStartIndex = 10
             }
             // 对 F=0xFE,C=0x03 的返回帧的数据域长度的特殊计算
             if (isFE03Acknowledgement) {
-                dataDomainByteLength = frameByteLength - 4
+                dataDomainByteLength = frameByteLength - 1
                 dataDomainCharStartIndex = 8
             }
             dataDomainCharLength = dataDomainByteLength * 2
@@ -3659,7 +3659,7 @@ class SecurityUnitFrameDecoder {
                 ParseType.DateType -> data.parseHexAsDateString()
             }
             this[ResultType.Meaning] = meaning
-            val dataMeaningDes = "$DATA_NAME$${this[ResultType.Meaning]}"
+            val dataMeaningDes = "$DATA_NAME${this[ResultType.Meaning]}"
             val byteCountDes = "$DATA_COUNT$byteCount"
             val dataFormatDes = "$DATA_FORMAT$dataFormat"
             val meaningDetailsDes = DATA_MEANING_DETAILS
