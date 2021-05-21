@@ -4,6 +4,7 @@ import androidx.compose.desktop.Window
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -73,8 +74,8 @@ fun main() = Window(
             }
             Column(
                 modifier = Modifier.fillMaxSize()
+                    .padding(bottom = 10.dp)
             ) {
-                //todo 待优化结果展示布局
                 when (resultCode) {
                     is SecurityUnitFrameDecoder.SecurityUnitFrameDecodeResultCode.DONE -> {
                         // 帧显示列宽度比例
@@ -85,9 +86,9 @@ fun main() = Window(
                         // 垂直滚动状态
                         val verticalScrollState = rememberScrollState(0f)
                         // 帧显示水平滚动状态
-                        val horizontalFrameScrollState = rememberScrollState(0f)
+                        //val horizontalFrameScrollState = rememberScrollState(0f)
                         // 含义显示水平滚动状态
-                        // todo 实现滚动
+                        //val horizontalMeaningScrollState = rememberScrollState(0f)
 
                         CheckBoxPanel(
                             frameDisplayWidth,
@@ -100,8 +101,9 @@ fun main() = Window(
 
                         Column(
                             modifier = Modifier.fillMaxSize()
+                                .verticalScroll(verticalScrollState)
                                 .padding(
-                                    start = 10.dp, end = 10.dp, top = 10.dp
+                                    start = 10.dp, end = 10.dp
                                 )
 
                         ) {
@@ -142,12 +144,13 @@ fun main() = Window(
                                                 Alignment.CenterVertically
                                             )
                                             .heightIn(
-                                                min = 25.dp,
-                                                max = 200.dp
+                                                min = 25.dp
                                             )
+                                            .padding(start = 5.dp)
                                     ) {
                                         Text(
-                                            subframe
+                                            subframe,
+                                            modifier=Modifier.padding(start=4.dp)
                                         )
 
                                     }
@@ -158,12 +161,13 @@ fun main() = Window(
                                                 Alignment.CenterVertically
                                             )
                                             .heightIn(
-                                                min = 25.dp,
-                                                max = 200.dp
+                                                min = 25.dp
                                             )
+                                            .padding(start = 5.dp)
                                     ) {
                                         Text(
-                                            meanings
+                                            meanings,
+                                            modifier=Modifier.padding(end=4.dp)
                                         )
                                     }
                                 }
@@ -204,7 +208,7 @@ fun CheckBoxPanel(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth()
-            .padding(start = 10.dp, end = 10.dp, top = 5.dp)
+            .padding(start = 10.dp, end = 10.dp, top = 5.dp,bottom = 10.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(frameDisplayWidth)

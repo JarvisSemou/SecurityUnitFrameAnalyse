@@ -28,7 +28,7 @@ class SecurityUnitFrameDecoder {
         ): SecurityUnitFrameDecodeResultCode {
             val decodeState: SecurityUnitFrameDecodeResultCode
             //字符串预处理----对数据域之外的部分去除空格、换行、转换为大写
-            val pretreatmentFrame = frame.replace(Regex("[\\s\\n\\r]"), "").uppercase(Locale.getDefault())
+            val pretreatmentFrame = frame.replace(Regex("[\\s\\n\\r]"), "").toUpperCase()
             //安全单元帧字节完整性检测
             if (!frameByteIntegrityCheck(pretreatmentFrame)) return SecurityUnitFrameDecodeResultCode.FRAME_BYTE_INCOMPLETE
             //安全单元帧格式完整性检测
@@ -199,15 +199,15 @@ class SecurityUnitFrameDecoder {
             isAcknoledgement = C_or_A and 0x80 == 0x80
             if (isAcknoledgement) {
                 S = frame.substring(10, 12).parseHexAsDecInt()
-                dataDomainByteLength = frameByteLength - 6
+                dataDomainByteLength = frameByteLength - 3
                 dataDomainCharStartIndex = 12
             } else {
-                dataDomainByteLength = frameByteLength - 5
+                dataDomainByteLength = frameByteLength - 2
                 dataDomainCharStartIndex = 10
             }
             // 对 F=0xFE,C=0x03 的返回帧的数据域长度的特殊计算
             if (isFE03Acknowledgement) {
-                dataDomainByteLength = frameByteLength - 4
+                dataDomainByteLength = frameByteLength - 1
                 dataDomainCharStartIndex = 8
             }
             dataDomainCharLength = dataDomainByteLength * 2
@@ -1142,7 +1142,7 @@ class SecurityUnitFrameDecoder {
                 """.trimIndent()
             }
 
-            map_3.parseDecHexData(
+            map_3.parsePlainHexData(
                 data_3,
                 data_3_byteLength
             )
@@ -3659,7 +3659,7 @@ class SecurityUnitFrameDecoder {
                 ParseType.DateType -> data.parseHexAsDateString()
             }
             this[ResultType.Meaning] = meaning
-            val dataMeaningDes = "$DATA_NAME$${this[ResultType.Meaning]}"
+            val dataMeaningDes = "$DATA_NAME${this[ResultType.Meaning]}"
             val byteCountDes = "$DATA_COUNT$byteCount"
             val dataFormatDes = "$DATA_FORMAT$dataFormat"
             val meaningDetailsDes = DATA_MEANING_DETAILS
