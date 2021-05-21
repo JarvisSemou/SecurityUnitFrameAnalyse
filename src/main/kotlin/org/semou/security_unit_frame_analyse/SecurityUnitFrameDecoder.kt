@@ -3705,7 +3705,7 @@ class SecurityUnitFrameDecoder {
                 byteLengthFromFrame
             else
                 realByteLength
-            val data_2 = this.substring(data_2_offset, data_2_byteLength)
+            val data_2 = this.substring(data_2_offset, data_2_offset+data_2_byteLength*2)
 
             return DataOf2N(
                 byteLength = data_1.toZeroPrefixHexString(data_1_byteLength),

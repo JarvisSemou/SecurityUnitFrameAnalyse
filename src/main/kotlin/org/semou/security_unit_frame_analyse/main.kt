@@ -4,13 +4,14 @@ import androidx.compose.desktop.Window
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.selection.SelectionContainer
+import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.unit.dp
 import java.util.*
 
@@ -84,11 +85,11 @@ fun main() = Window(
                         val meaningDisplayWidth = 0.5f
 
                         // 垂直滚动状态
-                        val verticalScrollState = rememberScrollState(0f)
+                        val verticalScrollState = rememberScrollState(0)
                         // 帧显示水平滚动状态
-                        //val horizontalFrameScrollState = rememberScrollState(0f)
+                        //val horizontalFrameScrollState = rememberScrollState(0)
                         // 含义显示水平滚动状态
-                        //val horizontalMeaningScrollState = rememberScrollState(0f)
+                        //val horizontalMeaningScrollState = rememberScrollState(0)
 
                         CheckBoxPanel(
                             frameDisplayWidth,
@@ -127,6 +128,16 @@ fun main() = Window(
                                     modifier = Modifier.wrapContentHeight()
                                         .background(color)
                                         .fillMaxWidth()
+                                        .pointerMoveFilter(
+                                            onEnter = {
+
+                                                false
+                                            },
+                                            onExit = {
+
+                                                false
+                                            }
+                                        )
                                 ) {
                                     val subframe: String = if (isShowOriginFrame)
                                         result[ResultType.Origin]!!

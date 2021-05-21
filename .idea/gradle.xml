@@ -4,16 +4,6 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="distributionType" value="DEFAULT_WRAPPED" />
-        <option name="externalProjectPath" value="D:/Project/GithubDesktop/Personal/SecurityUnitFrameAnalyse" />
-        <option name="gradleHome" value="$PROJECT_DIR$/../../../../Develop/Softwares/gradle/gradle-6.7.1" />
-        <option name="modules">
-          <set>
-            <option value="D:/Project/GithubDesktop/Personal/SecurityUnitFrameAnalyse" />
-          </set>
-        </option>
-      </GradleProjectSettings>
-      <GradleProjectSettings>
         <option name="distributionType" value="WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleHome" value="$PROJECT_DIR$/../../../../Develop/Softwares/gradle/gradle-6.7.1" />
