@@ -15,9 +15,10 @@ import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.unit.dp
 import java.util.*
 
-
+// todo 1、添加输入历史查看功能
+// todo 2. 调整帧输入框高度
 fun main() = Window(
-    title = "SecurityUnit 2.0 FrameAnalyse ---- ShiYue Semou"
+    title = "Security Unit 2.0 Frame Analyse v1.0 by ShiYue Semou"
 ) {
     MaterialTheme {
         /** 输入的安全单元帧 */

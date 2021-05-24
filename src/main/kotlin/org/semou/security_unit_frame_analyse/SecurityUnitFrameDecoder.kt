@@ -82,7 +82,6 @@ class SecurityUnitFrameDecoder {
                         A != 0x82
                     ) {
                         isFE03Acknowledgement = true
-                        decodeSuccess = true
                     } else {
                         return decodeSuccess
                     }
@@ -293,10 +292,10 @@ class SecurityUnitFrameDecoder {
             // 特殊情况：安全单元升级命令 F=0xFE, C=0x03 命令的返回帧无响应码（A），只能单独处理帧数据域解析
             if (isFE03Acknowledgement) {
                 //todo 解析 FE03 返回帧的数据域
+                // 目前不知道怎么解析 FE03 的返回帧，这是一个坑
                 return
             }
             when (F_C_or_A) {
-                //todo 待完成数据域解析
                 // 注释的方法皆无数据域
 //                0x0001 -> parse_0001_DataDomain(frame,resultList)
                 0x0002 -> parse_0002_DataDomain(frame, resultList)
@@ -423,14 +422,179 @@ class SecurityUnitFrameDecoder {
                 0x0685 -> parse_0685_DataDomain(frame, resultList)
 //                0x0686->parse_0686_DataDomain(frame,resultList)
 //                // 安全单元升级命令
-//                0xFE01->parse_FE01_DataDomain(frame,resultList)
-//                0xFE02->parse_FE02_DataDomain(frame,resultList)
-//                0xFE03->parse_FE03_DataDomain(frame,resultList)
-//                0xFE04->parse_FE04_DataDomain(frame,resultList)
+                0xFE01 -> parse_FE01_DataDomain(frame, resultList)
+                0xFE02 -> parse_FE02_DataDomain(frame, resultList)
+                0xFE03 -> parse_FE03_DataDomain(frame, resultList)
+                0xFE04 -> parse_FE04_DataDomain(frame, resultList)
 //                0xFE81->parse_FE81_DataDomain(frame,resultList)
-//                0xFE82->parse_FE82_DataDomain(frame,resultList)
-//                0xFE84->parse_FE84_DataDomain(frame,resultList)
+                0xFE82 -> parse_FE82_DataDomain(frame, resultList)
+                0xFE84 -> parse_FE84_DataDomain(frame, resultList)
             }
+        }
+
+        private fun parse_FE84_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "跳转的程序区")
+
+            val data_1_byteLength = 1
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+
+            map_1.parsePlainHexData(
+                data_1,
+                data_1_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    ${
+                    when (data_1) {
+                        "00" -> "跳转成功"
+                        "01" -> "指定跳转的程序区时目前正在运行的程序区"
+                        "02" -> "程序进入 boot 区进行校验码判断（正常流程先进入 boot ，判断可以跳转则跳转到指定区域）"
+                        else -> "未知跳转状态码"
+                    }
+                }
+                """.trimIndent()
+            }
+
+            resultList.add(map_1)
+        }
+
+        private fun parse_FE82_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "程序块序号")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "程序代码数据")
+
+            val data_1_byteLength = 2
+            val data_2_byteLength = dataDomainByteLength - data_1_byteLength
+
+            val (data_1, data_2) = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex).parse_2_N_HexData()
+
+            map_1.parseDecHexData(
+                data_1,
+                data_1_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    高位在前
+                """.trimIndent()
+            }
+
+            map_2.parsePlainHexData(
+                data_2,
+                data_2_byteLength
+            )
+
+            resultList.addResults(
+                map_1,
+                map_2
+            )
+        }
+
+        private fun parse_FE04_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "程序区号")
+
+            val data_1_byteLength = 1
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+
+            map_1.parsePlainHexData(
+                data_1,
+                data_1_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    跳转到指定版本号对应的程序
+                    A 区（0x8006000-8022FFF）共116K
+                    B 区（0x8002300-803FFFF）共116K
+                    跳转 A 区（0x01）
+                    跳转 B 区（0x02）
+                """.trimIndent()
+            }
+
+            resultList.add(map_1)
+        }
+
+        private fun parse_FE03_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "升级状态码")
+
+            val data_1_byteLength = 1
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+
+            map_1.parsePlainHexData(
+                data_1,
+                data_1_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    ${
+                    when (data_1) {
+                        "00" -> "升级成功"
+                        "01" -> "擦 ROM 失败"
+                        "02" -> "掌机响应状态码错误"
+                        "03" -> "写 ROM 失败"
+                        "04" -> "掌机下发校验和与模块计算校验和不一致"
+                        "05" -> "解码错误"
+                        "06" -> "Mot 文件格式错误"
+                        "07" -> "ROM 地址错误"
+                        "FF" -> "升级失败"
+                        else -> "未知升级状态码"
+                    }
+                }
+                """.trimIndent()
+            }
+
+            resultList.add(map_1)
+        }
+
+        private fun parse_FE02_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "程序块序号")
+
+            val data_1_byteLength = 2
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, dataDomainCharEndIndex)
+
+            map_1.parseDecHexData(
+                data_1,
+                data_1_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    高位在前
+                """.trimIndent()
+            }
+
+            resultList.add(map_1)
+        }
+
+        private fun parse_FE01_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
+            val map_1 = hashMapOf<ResultType, String>(ResultType.Meaning to "升级总块数")
+            val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "升级程序校验和")
+
+            val data_1_byteLength = 2
+            val data_2_byteLength = 1
+
+            val data_2_offset = dataDomainCharStartIndex + data_1_byteLength * 2
+
+            val data_1 = frame.substring(dataDomainCharStartIndex, data_2_offset)
+            val data_2 = frame.substring(data_2_offset, dataDomainCharEndIndex)
+
+            map_1.parseDecHexData(
+                data_1,
+                data_1_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    高位在前
+                """.trimIndent()
+            }
+
+            map_2.parseDecHexData(
+                data_2,
+                data_2_byteLength
+            ) { _, _, _, _, _, preDes ->
+                preDes + """
+                    解密前数据累加和 ( 80 0c 40 06 + Lc + Ramdom16 + 密文 )
+                """.trimIndent()
+            }
+
+            resultList.addResults(
+                map_1,
+                map_2
+            )
         }
 
         private fun parse_0685_DataDomain(frame: String, resultList: MutableList<HashMap<ResultType, String>>) {
@@ -857,10 +1021,10 @@ class SecurityUnitFrameDecoder {
             val data_1_byteLength = 1
             val data_2_byteLength = 8
             val data_3_byteLength = 2
-            var data_4_byteLength = UNCERTAIN_LENGTH
+            //var data_4_byteLength = UNCERTAIN_LENGTH
             val data_5_byteLength = 4
             val data_6_byteLength = 1
-            var data_7_byteLength = UNCERTAIN_LENGTH
+            //var data_7_byteLength = UNCERTAIN_LENGTH
             val data_8_byteLength = 7
 
             val data_2_offset = dataDomainCharStartIndex + data_1_byteLength
@@ -871,12 +1035,12 @@ class SecurityUnitFrameDecoder {
             val data_2 = frame.substring(data_2_offset, data_3_offset)
             val (data_3, data_4) = frame.substring(data_3_offset).parse_2_N_HexData()
 
-            data_4_byteLength = data_4.length / 2
+            val data_4_byteLength = data_4.length / 2
             val data_5_offset = data_4_offset + data_4.length
             val data_6_offset = data_5_offset + data_5_byteLength * 2
             val data_7_offset = data_6_offset + data_6_byteLength * 2
             val data_8_offset = dataDomainCharEndIndex - data_8_byteLength * 2
-            data_7_byteLength = (data_8_offset - data_7_offset) / 2
+            val data_7_byteLength = (data_8_offset - data_7_offset) / 2
 
             val data_5 = frame.substring(data_5_offset, data_6_offset)
             val data_6 = frame.substring(data_6_offset, data_7_offset)
@@ -2188,7 +2352,7 @@ class SecurityUnitFrameDecoder {
             val map_2 = hashMapOf<ResultType, String>(ResultType.Meaning to "校时数据密文")
 
             val data_1_byteLength = 2
-            val data_2_byteLength = 32 * 6 + 48
+            // val data_2_byteLength = 32 * 6 + 48
 
             val (data_1, data_2) = frame.parse_2_N_HexData()
 
