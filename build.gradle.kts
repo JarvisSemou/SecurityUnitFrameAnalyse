@@ -16,6 +16,7 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 tasks.withType<KotlinCompile> {
